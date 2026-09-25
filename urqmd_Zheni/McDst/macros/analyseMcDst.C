@@ -23,27 +23,27 @@
 #include "TRandom3.h"
 
 // McDst headers
-#include "/star/u/annakraeva/urqmd_hbt_Zheni/StRoot/McDst/McDstReader.h"
-#include "/star/u/annakraeva/urqmd_hbt_Zheni/StRoot/McDst/McDst.h"
-#include "/star/u/annakraeva/urqmd_hbt_Zheni/StRoot/McDst/McEvent.h"
-#include "/star/u/annakraeva/urqmd_hbt_Zheni/StRoot/McDst/McParticle.h"
-#include "/star/u/annakraeva/urqmd_hbt_Zheni/StRoot/McDst/McRun.h"
+#include "../McDstReader.h"
+#include "../McDst.h"
+#include "../McEvent.h"
+#include "../McParticle.h"
+#include "../McRun.h"
 
 // inFile - is a name of name.uDst.root file or a name
 //          of a name.lis(t) files that contains a list of
 //          name1.uDst.root files
 //_________________
-void analyseMcDst(const Char_t *inFile = "/star/data01/pwg/annakraeva/urqmd_3_Zheni/resonances_off/subdata10/20FD7BD02BAC653389E226F92AA0D5F8_9980.mcDst.root",
-		  const Char_t *oFileName = "oTest_3gev_res_off.root") {
+void analyseMcDst(const Char_t *inFile,
+		  const Char_t *oFileName) {
 
   std::cout << "Hi! Lets do some physics, Master!" << std::endl;
-
+/*
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6,0,0)
   R__LOAD_LIBRARY(../libMcDst)
 #else
     gSystem->Load("/star/u/annakraeva/urqmd_hbt_Zheni/StRoot/McDst/libMcDst.so");
 #endif
-
+*/
   McDstReader* myReader = new McDstReader(inFile);
   myReader->Init();
 

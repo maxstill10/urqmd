@@ -23,13 +23,13 @@
 #include "TString.h"
 
 //_________________
-void runProcessing(const Char_t *inFileName = "/star/u/annakraeva/urqmd_hbt_Zheni/3gev_pAu_100files.list",
+void runProcessing(const Char_t *inFileName = "/star/data01/pwg/mmorozov/urqmd/oo/6gev/subdata2/98D8CB1E062BED1E534A38C09C6F8079_1000.mcDst.root",
 //void runProcessing(const Char_t *inFileName = "/star/data01/pwg/annakraeva/urqmd_3gev/subdata0/F2F79597F382EE8E86E9557074E094F0_1000.mcDst.root",
-                   const Char_t *oFileName = "hImpactPar_100bins_pAu_100files.root") {
+                   const Char_t *oFileName = "oTest.root") {
   // Next line is not needed if you are not running in a standalone mode
-  gSystem->Load("/star/u/annakraeva/urqmd/urqmd-3.4/McDst/libMcDst.so");
+  gSystem->Load("/star/u/mmorozov/urqmd/urqmd_Zheni/McDst/libMcDst.so");
   TString str;
-  str = ".x /star/u/annakraeva/urqmd_hbt_Zheni/urqmd_Zheni/McDst/macros/analyseMcDst.C+(\"";
+  str = ".x analyseMcDst.C+(\"";
   //str = ".x analyseMcDst.C+(\"";
   str += inFileName;
   str += "\",\"";
