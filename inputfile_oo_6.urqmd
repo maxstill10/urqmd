@@ -1,0 +1,28 @@
+#Au
+pro 16 8
+#Au
+tar 16 8
+
+#Number events to generate
+nev 1000
+#Impact parameter
+IMP 0.0 7.0
+
+#Energy in the c.m. system
+ecm 6
+
+tim 200 200
+
+cto 27 0
+
+rsd RNDNUM
+
+#f13
+f14
+f15
+f16
+f19
+f20
+
+xxx
+ 

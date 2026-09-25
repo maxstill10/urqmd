@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<job maxFilesPerProcess="5" filesPerHour="4" fileListSyntax="xrootd" simulateSubmission="false" copyInputLocally="true">
+  <command>
+    setenv NODEBUG yes
+    stardev
+   
+   <!-- ln -s /star/u/annakraeva/soft/HbtInt_pico.cxx . -->    
+   <!-- ln -s /star/u/annakraeva/soft/StRoot .       -->
+   <!-- ln -s /star/u/annakraeva/soft/.sl73_gcc485 . -->
+
+    root4star -b -l -q runProcessing.C\(\"$FILELIST\",\"pico3gev_$JOBID.root\"\)
+   
+  </command>
+
+  <SandBox>
+    <Package>
+      <File>file:/star/u/annakraeva/urqmd_hbt_Zheni/.sl73_gcc485</File> 
+      <File>file:/star/u/annakraeva/urqmd_hbt_Zheni/StRoot</File> 
+      <File>file:/star/u/annakraeva/urqmd_hbt_Zheni/urqmd_Zheni/McDst/macros/runProcessing.C</File>
+    </Package>
+  </SandBox>   
+
+
+
+  <input URL="filelist:/star/u/annakraeva/urqmd_hbt_Zheni/3gev_subdata0.list"/>
+  <stdout URL="file:/star/data01/pwg/annakraeva/spectra/results/3gev/dif_width_bins/calc_mult_macros_analyseMcDst/log/pico3gev_$JOBID.out"/>
+  <stderr URL="file:/star/data01/pwg/annakraeva/spectra/results/3gev/dif_width_bins/calc_mult_macros_analyseMcDst/log/pico3gev_$JOBID.err"/>
+  <output fromScratch="pico3gev_$JOBID.root" toURL="file:/star/data01/pwg/annakraeva/spectra/results/3gev/dif_width_bins/calc_mult_macros_analyseMcDst/results/"/>
+
+  <Generator>
+    <Location>/star/data01/pwg/annakraeva/spectra/results/3gev/dif_width_bins/calc_mult_macros_analyseMcDst/log/</Location>
+  </Generator>
+</job>
