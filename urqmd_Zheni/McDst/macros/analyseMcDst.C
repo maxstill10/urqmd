@@ -21,6 +21,7 @@
 #include "TMath.h"
 #include "TF1.h"
 #include "TRandom3.h"
+#include "TComplex.h"
 
 // McDst headers
 #include "../McDstReader.h"
@@ -31,6 +32,7 @@
 
 //My functions
 int GetCentrality(int refMult);
+int Get_refmult(McDst *dst);
 double Cacl_2cov_ref(TComplex Qn, int M);
 double Cacl_4cov_ref(TComplex Qn, TComplex Q2n, int M);
 double Cacl_2cov_dif(TComplex Qn, TComplex pn, int M, int mp);
@@ -159,9 +161,9 @@ void analyseMcDst(const Char_t *inFile,
           
 
           n_prot++;
-          if (fabs(eta) < 1. && t>199) {n_spec_prot_withcuts++}
-          if (t>199) {n_spec_prot++}
-          if (fabs(eta)>1.) {n_prot_withcuts++}
+          if (fabs(eta) < 1. && t>199) {n_spec_prot_withcuts++;}
+          if (t>199) {n_spec_prot++;}
+          if (fabs(eta)>1.) {n_prot_withcuts++;}
 
       }//for(Int_t iTrk=0; iTrk<nTracks; iTrk++)
   } //for(Long64_t iEvent=0; iEvent<events2read; iEvent++)
