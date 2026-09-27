@@ -35,8 +35,11 @@ int GetCentrality(int refMult);
 int Get_refmult(McDst *dst);
 double Cacl_2cov_ref(TComplex Qn, int M);
 double Cacl_4cov_ref(TComplex Qn, TComplex Q2n, int M);
-double Cacl_2cov_dif(TComplex Qn, TComplex pn, int M, int mp);
-double Cacl_4cov_dif(TComplex Qn, TComplex Q2n, TComplex pn, TComplex p2n, int M, int mp);
+double Cacl_2cov_dif(TComplex Qn, TComplex pn, int M, int mp, int mq);
+double Cacl_4cov_dif(TComplex Qn, TComplex pn, TComplex qn, TComplex Q2n, TComplex q2n, int M, int mp, int mq);
+
+//pt and eta intervals
+//double const pt_intervals[] = {0.15, 0.4, 0.6, 0.8, 1., 1.2, 1.4, 1.6, 1.8, 2., 2.4, }
 
 
 // inFile - is a name of name.uDst.root file or a name
@@ -46,14 +49,19 @@ double Cacl_4cov_dif(TComplex Qn, TComplex Q2n, TComplex pn, TComplex p2n, int M
 void analyseMcDst(const Char_t *inFile,
 		  const Char_t *oFileName) {
 
+  //Hist initialization
+  TH1F *hpT = new TH1F("hpT", "p_{T} of particles", 570, 0.15, 3);
+
+  TProfile *pCor2_ref[3];
+  TProfile *pCor4_ref[3];
+
+  for(int n=0; n!=3; n++){
+    pCor2_ref[n] = new TProfile(Form("pCor2_ref_%i", n), "", 9, 0, 9);
+    pCor4_ref[n] = new TProfile(Form("pCor4_ref_%i", n), "", 9, 0, 9);
+  }
+
   std::cout << "Hi! Lets do some physics, Master!" << std::endl;
-/*
-#if ROOT_VERSION_CODE >= ROOT_VERSION(6,0,0)
-  R__LOAD_LIBRARY(../libMcDst)
-#else
-    gSystem->Load("/star/u/annakraeva/urqmd_hbt_Zheni/StRoot/McDst/libMcDst.so");
-#endif
-*/
+
   McDstReader* myReader = new McDstReader(inFile);
   myReader->Init();
 
@@ -90,82 +98,118 @@ void analyseMcDst(const Char_t *inFile,
   // Loop over events
   for(Long64_t iEvent=0 ; iEvent<events2read; iEvent++) {
 
-      eventCounter++;
-      if( eventCounter >= 1000 ) {
-        eventCounter = 0;
-        hundredIter++;
-        std::cout << "Working on event #[" << (hundredIter * 1000)
-      << "/" << events2read << "]" << std::endl;
+    eventCounter++;
+    if( eventCounter >= 1000 ) {
+      eventCounter = 0;
+      hundredIter++;
+      std::cout << "Working on event #[" << (hundredIter * 1000)
+    << "/" << events2read << "]" << std::endl;
+    }
+
+    Bool_t readEvent = myReader->loadEntry(iEvent);
+    if( !readEvent ) {
+      std::cout << "Something went wrong, Master! Nothing to analyze..."
+    << std::endl;
+      break;
+    }
+
+    // Retrieve femtoDst
+    McDst *dst = myReader->mcDst();
+
+    // Retrieve event information
+    McEvent *event = dst->event();
+    if( !event ) {
+      std::cout << "Something went wrong, Master! Event is hiding from me..."
+    << std::endl;
+      break;
+    }
+
+    //Get event centrality
+    int refMult = Get_refmult(dst) ;
+    int cent = GetCentrality(refMult);
+    if(cent<0) continue;
+    
+
+    //Variables for particle number counting
+    double lQn_calc[15] = {}; // (cos(nphi), sin(nphi), cos(2nphi), sin(2nphi), numPart) * (n=1,2,3)
+    double lpn_pos_cent_calc[15] = {};
+    double lpn_neg_cent_calc[15] = {};
+
+    // Track analysis
+    Int_t nTracks = dst->numberOfParticles();
+
+    // Track loop
+    for(Int_t iTrk=0; iTrk<nTracks; iTrk++) {
+
+      // Retrieve i-th femto track
+      McParticle *particle = dst->particle(iTrk);
+
+      if (!particle) continue;
+      //std::cout << "Track #[" << (iTrk+1) << "/" << nTracks << "]"  << std::endl;        
+
+  
+      //variables
+      Double_t x = particle->x();
+      Double_t y = particle->y();
+      Double_t z = particle->z();
+      Double_t px = particle->px();
+      Double_t py = particle->py();
+      Double_t pz = particle->pz();
+      Double_t p = particle->ptot();
+      Double_t pt = particle->pt();
+      Double_t phi = particle->phi();
+      Double_t eta = particle->eta();
+      Double_t mass = particle->mass();
+      //Double_t pdgMass = particle->pdgMass();
+      Double_t e = particle->e();
+      Double_t t = particle->t();
+      Int_t pdg = particle->pdg();
+
+      if(particle->charge() == 0) continue;
+      if(particle->pt() < 0.15) continue;
+
+      hpT->Fill(pt);
+
+      //Get pt and eta bins
+      //int ipt = 
+
+      //Directed flow measurements
+      if(fabs(particle->eta()) > 5.5) continue;
+
+      lQn_calc[0] += TMath::Cos(phi);
+      lQn_calc[1] += TMath::Sin(phi);
+      lQn_calc[2] += TMath::Cos(2*phi);
+      lQn_calc[3] += TMath::Sin(2*phi);
+      lQn_calc[4] += 1;
+
+      //Elliptic and triangular flow measurements
+      if(fabs(particle->eta()) > 1.) continue;
+
+      for(int n = 1; n!=3; n++){
+        lQn_calc[5*n] += TMath::Cos((n+1)*phi);
+        lQn_calc[5*n+1] += TMath::Sin((n+1)*phi);
+        lQn_calc[5*n+2] += TMath::Cos(2*(n+1)*phi);
+        lQn_calc[5*n+3] += TMath::Sin(2*(n+1)*phi);
+        lQn_calc[5*n+4] += 1;
       }
 
-      Bool_t readEvent = myReader->loadEntry(iEvent);
-      if( !readEvent ) {
-        std::cout << "Something went wrong, Master! Nothing to analyze..."
-      << std::endl;
-        break;
-      }
+    }//for(Int_t iTrk=0; iTrk<nTracks; iTrk++)
 
-      // Retrieve femtoDst
-      McDst *dst = myReader->mcDst();
+    
+    //Flow calculations by cumulants
+    if(cent<3) continue;
+    //Reference flow calculation
+    for(int n=0; n!=3; n++){
+      TComplex Qn(lQn_calc[5*n], lQn_calc[5*n+1]);
+      TComplex Q2n(lQn_calc[5*n+2], lQn_calc[5*n+3]);
+      int M = int(lQn_calc[5*n+4]);
 
-      // Retrieve event information
-      McEvent *event = dst->event();
-      if( !event ) {
-        std::cout << "Something went wrong, Master! Event is hiding from me..."
-      << std::endl;
-        break;
-      }
+      double ev_2cor_ref = Cacl_2cov_ref(Qn, M);
+      double ev_4cor_ref = Cacl_4cov_ref(Qn, Q2n, M);
 
-      //Get event centrality
-      int refMult = Get_refmult(dst) ;
-      cout<<"refMult = "<<refMult;
-      int cent = GetCentrality(refMult);
-      cout<<",    centrality bin = "<<cent<<endl;
-      
-
-      //Variables for particle number counting
-      int n_prot = 0, n_spec_prot = 0, n_spec_prot_withcuts = 0, n_prot_withcuts = 0;
-
-      // Track analysis
-      Int_t nTracks = dst->numberOfParticles();
-
-      // Track loop
-      for(Int_t iTrk=0; iTrk<nTracks; iTrk++) {
-
-          // Retrieve i-th femto track
-          McParticle *particle = dst->particle(iTrk);
-
-          if (!particle) continue;
-          //std::cout << "Track #[" << (iTrk+1) << "/" << nTracks << "]"  << std::endl;        
-
-      
-          //variables
-          Double_t x = particle->x();
-          Double_t y = particle->y();
-          Double_t z = particle->z();
-          Double_t px = particle->px();
-          Double_t py = particle->py();
-          Double_t pz = particle->pz();
-          Double_t p = particle->ptot();
-          Double_t pt = particle->pt();
-          Double_t phi = particle->phi();
-          Double_t eta = particle->eta();
-          Double_t mass = particle->mass();
-          //Double_t pdgMass = particle->pdgMass();
-          Double_t e = particle->e();
-          Double_t t = particle->t();
-          Int_t pdg = particle->pdg();
-
-          if(pt > 0.15) continue;
-          if(pdg != 2212) continue; //proton only
-          
-
-          n_prot++;
-          if (fabs(eta) < 1. && t>199) {n_spec_prot_withcuts++;}
-          if (t>199) {n_spec_prot++;}
-          if (fabs(eta)>1.) {n_prot_withcuts++;}
-
-      }//for(Int_t iTrk=0; iTrk<nTracks; iTrk++)
+      pCor2_ref[n]->Fill(cent, ev_2cor_ref, M*(M-1));
+      pCor4_ref[n]->Fill(cent, ev_4cor_ref, M*(M-1)*(M-2)*(M-3));
+    }
   } //for(Long64_t iEvent=0; iEvent<events2read; iEvent++)
 
 
@@ -217,6 +261,9 @@ int Get_refmult(McDst *dst){
 }
 
 
+
+
+
 double Cacl_2cov_ref(TComplex Qn, int M){
   return (Qn.Rho2() - M) / M / (M-1);
 }
@@ -230,17 +277,20 @@ double Cacl_4cov_ref(TComplex Qn, TComplex Q2n, int M){
 }
 
 
-double Cacl_2cov_dif(TComplex Qn, TComplex pn, int M, int mp){
+double Cacl_2cov_dif(TComplex Qn, TComplex pn, int M, int mp, int mq){
   TComplex Qn_star = TComplex::Conjugate(Qn);
-  double up_part = pn*Qn_star - mp;
-  return up_part / mp / (M-1);
+  double up_part = (pn*Qn_star).Re() - mq;
+  return up_part / (mp*M-mq);
 }
 
 
-double Cacl_4cov_dif(TComplex Qn, TComplex Q2n, TComplex pn, TComplex p2n, int M, int mp){
+double Cacl_4cov_dif(TComplex Qn, TComplex pn, TComplex qn, TComplex Q2n, TComplex q2n, int M, int mp, int mq){
   TComplex Qn_star = TComplex::Conjugate(Qn);
+  TComplex qn_star = TComplex::Conjugate(qn);
+  TComplex Q2n_star = TComplex::Conjugate(Q2n);
   double Qn_squared = Qn.Rho2();
-  double up_part = 0;
-  return up_part / M / (M-1) / (M-2) / (M-3);
+  double up_part = (pn*Qn_star*Qn_squared - q2n*Qn_star*Qn_star - pn*Qn_star*Q2n_star - 2*M*pn*Qn_star - 2*mq*Qn_squared +\
+                    7*qn*Qn_star - Qn*qn_star + q2n*Q2n_star + 2*pn*Qn_star + 2*mq*M - 6*mq).Re();
+  return up_part / (mp*M - 3*mq) / (M-1) / (M-2);
 }
 
