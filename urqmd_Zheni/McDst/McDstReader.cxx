@@ -100,6 +100,7 @@ void McDstReader::setBranchAddresses(TChain *chain) {
 void McDstReader::streamerOff() {
   McEvent::Class()->IgnoreTObjectStreamer();
   McParticle::Class()->IgnoreTObjectStreamer();
+  McRun::Class()->IgnoreTObjectStreamer();
 }
 
 //_________________

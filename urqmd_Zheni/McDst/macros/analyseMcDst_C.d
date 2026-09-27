@@ -80,6 +80,7 @@
 ./analyseMcDst_C.so: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/opt/spack/linux-rhel7-x86_64/gcc-4.8.5/root-5.34.38-eyawaunrtayjlt3aqon5claakm3c7xl7/include/TRandom3.h
 ./analyseMcDst_C.so: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/opt/spack/linux-rhel7-x86_64/gcc-4.8.5/root-5.34.38-eyawaunrtayjlt3aqon5claakm3c7xl7/include/TRandom.h
 ./analyseMcDst_C.so: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/opt/spack/linux-rhel7-x86_64/gcc-4.8.5/root-5.34.38-eyawaunrtayjlt3aqon5claakm3c7xl7/include/TComplex.h
+./analyseMcDst_C.so: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/opt/spack/linux-rhel7-x86_64/gcc-4.8.5/root-5.34.38-eyawaunrtayjlt3aqon5claakm3c7xl7/include/TProfile.h
 ./analyseMcDst_C.so: ../McDstReader.h
 ./analyseMcDst_C.so: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/opt/spack/linux-rhel7-x86_64/gcc-4.8.5/root-5.34.38-eyawaunrtayjlt3aqon5claakm3c7xl7/include/TClonesArray.h
 ./analyseMcDst_C.so: ../McDst.h ../McArrays.h ../McRun.h ../McDst.h

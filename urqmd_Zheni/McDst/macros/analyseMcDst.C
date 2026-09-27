@@ -22,6 +22,7 @@
 #include "TF1.h"
 #include "TRandom3.h"
 #include "TComplex.h"
+#include "TProfile.h"
 
 // McDst headers
 #include "../McDstReader.h"
@@ -48,17 +49,8 @@ double Cacl_4cov_dif(TComplex Qn, TComplex pn, TComplex qn, TComplex Q2n, TCompl
 //_________________
 void analyseMcDst(const Char_t *inFile,
 		  const Char_t *oFileName) {
-
-  //Hist initialization
-  TH1F *hpT = new TH1F("hpT", "p_{T} of particles", 570, 0.15, 3);
-
-  TProfile *pCor2_ref[3];
-  TProfile *pCor4_ref[3];
-
-  for(int n=0; n!=3; n++){
-    pCor2_ref[n] = new TProfile(Form("pCor2_ref_%i", n), "", 9, 0, 9);
-    pCor4_ref[n] = new TProfile(Form("pCor4_ref_%i", n), "", 9, 0, 9);
-  }
+  
+  gSystem->Load("/star/u/mmorozov/urqmd/urqmd_Zheni/McDst/libMcDst.so");
 
   std::cout << "Hi! Lets do some physics, Master!" << std::endl;
 
@@ -85,6 +77,16 @@ void analyseMcDst(const Char_t *inFile,
 
   TFile *oFile = new TFile(oFileName, "RECREATE");
 
+  //Hist initialization
+  TH1F *hpT = new TH1F("hpT", "p_{T} of particles", 570, 0.15, 3);
+
+  TProfile *pCor2_ref[3];
+  TProfile *pCor4_ref[3];
+
+  for(int n=0; n!=3; n++){
+    pCor2_ref[n] = new TProfile(Form("pCor2_ref_%i", n), "", 9, 0, 9);
+    pCor4_ref[n] = new TProfile(Form("pCor4_ref_%i", n), "", 9, 0, 9);
+  }
 
   Int_t eventCounter = 0;
   Int_t hundredIter = 0;
@@ -99,6 +101,8 @@ void analyseMcDst(const Char_t *inFile,
   for(Long64_t iEvent=0 ; iEvent<events2read; iEvent++) {
 
     eventCounter++;
+//std::cout << "Working on event #[" << eventCounter
+//    << "/" << events2read << "]" << std::endl;
     if( eventCounter >= 1000 ) {
       eventCounter = 0;
       hundredIter++;

@@ -23,7 +23,7 @@
 #include "TString.h"
 
 //_________________
-void runProcessing(const Char_t *inFileName = "/star/data01/pwg/mmorozov/urqmd/oo/6gev/subdata2/98D8CB1E062BED1E534A38C09C6F8079_1000.mcDst.root",
+void runProcessing(const Char_t *inFileName = "/star/data01/pwg/mmorozov/urqmd/oo/6gev/subdata20/8B8F4489F33667DF2ED3553E3AB317AC_6987.mcDst.root",
 //void runProcessing(const Char_t *inFileName = "/star/data01/pwg/annakraeva/urqmd_3gev/subdata0/F2F79597F382EE8E86E9557074E094F0_1000.mcDst.root",
                    const Char_t *oFileName = "oTest.root") {
   // Next line is not needed if you are not running in a standalone mode
