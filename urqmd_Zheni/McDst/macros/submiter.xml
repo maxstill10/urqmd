@@ -1,0 +1,28 @@
+<!-- Task description -->
+<job maxFilesPerProcess="20" filesPerHour="8" fileListSyntax="xrootd">
+<!-- Decription of the task -->
+<shell>singularity exec -e -B /direct -B /star -B /afs -B /gpfs -B /sdcc/lustre02 /cvmfs/star.sdcc.bnl.gov/containers/rhic_sl7.sif</shell>
+<command>
+    <!-- setenv NODEBUG yes -->
+
+    ln -s /star/u/mmorozov/urqmd/urqmd_Zheni/McDst/macros/analyseMcDst.C .
+    ln -s /star/u/mmorozov/urqmd/urqmd_Zheni/McDst/macros/runProcessing.C .
+    ln -s /star/u/mmorozov/urqmd/urqmd_Zheni/McDst .
+    ln -s /star/u/mmorozov/urqmd/urqmd_Zheni/McDst/libMcDst.so .
+
+    root -b -l -q runProcessing.C\(\"$FILELIST\",\"$JOBID.root\"\)
+    </command>
+
+<!-- Get input files from get_file_lis.pl -->
+<input URL="filelist:/star/data01/pwg/mmorozov/urqmd/oo/6gev/filelist/filelist_subdata0.list"/>
+<stdout URL="file:/star/data01/pwg/mmorozov/urqmd/oo/6gev/log/$JOBID.out"/>
+<stderr URL="file:/star/data01/pwg/mmorozov/urqmd/oo/6gev/log/$JOBID.err"/>
+<output fromScratch="$JOBID.root" toURL="file:/star/data01/pwg/mmorozov/urqmd/oo/6gev/data/"/>
+
+
+  <Generator>
+    <Location>/star/data01/pwg/mmorozov/urqmd/oo/6gev/log</Location>
+  </Generator>
+
+
+</job>
