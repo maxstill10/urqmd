@@ -34,6 +34,7 @@
 //My functions
 int GetCentrality(int refMult);
 int Get_refmult(McDst *dst);
+void Qn_calc(double lQn_calc[], int nOrd, double phi);
 double Cacl_2cov_ref(TComplex Qn, int M);
 double Cacl_4cov_ref(TComplex Qn, TComplex Q2n, int M);
 double Cacl_2cov_dif(TComplex Qn, TComplex pn, int M, int mp, int mq);
@@ -336,10 +337,10 @@ int Get_refmult(McDst *dst){
 
 
 void Qn_calc(double lQn_calc[], int nOrd, double phi){
-  lQn_calc[5*nOrd] += TMath::Cos((n+1)*phi);
-  lQn_calc[5*nOrd+1] += TMath::Sin((n+1)*phi);
-  lQn_calc[5*nOrd+2] += TMath::Cos(2*(n+1)*phi);
-  lQn_calc[5*nOrd+3] += TMath::Sin(2*(n+1)*phi);
+  lQn_calc[5*nOrd] += TMath::Cos((nOrd+1)*phi);
+  lQn_calc[5*nOrd+1] += TMath::Sin((nOrd+1)*phi);
+  lQn_calc[5*nOrd+2] += TMath::Cos(2*(nOrd+1)*phi);
+  lQn_calc[5*nOrd+3] += TMath::Sin(2*(nOrd+1)*phi);
   lQn_calc[5*nOrd +4] += 1;
 }
 
