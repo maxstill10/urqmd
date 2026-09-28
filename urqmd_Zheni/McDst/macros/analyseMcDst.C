@@ -82,11 +82,28 @@ void analyseMcDst(const Char_t *inFile,
 
   TProfile *pCor2_ref[3];
   TProfile *pCor4_ref[3];
+  TProfile *pCor2_dif_posPart_cent[3];
+  TProfile *pCor4_dif_posPart_cent[3];
+  TProfile *pCor2_dif_negPart_cent[3];
+  TProfile *pCor4_dif_negPart_cent[3];
+  TProfile *pCor2_dif_prot_cent_forv1;
+  TProfile *pCor2_dif_protBar_cent_forv1;
+  TProfile *pCor4_dif_prot_cent_forv1;
+  TProfile *pCor4_dif_protBar_cent_forv1;
 
   for(int n=0; n!=3; n++){
     pCor2_ref[n] = new TProfile(Form("pCor2_ref_%i", n), "", 9, 0, 9);
     pCor4_ref[n] = new TProfile(Form("pCor4_ref_%i", n), "", 9, 0, 9);
+    pCor2_dif_posPart_cent[n] = new TProfile(Form("pCor2_dif_posPart_cent_%i", n), "", 9, 0, 9);
+    pCor4_dif_posPart_cent[n] = new TProfile(Form("pCor4_dif_posPart_cent_%i", n), "", 9, 0, 9);
+    pCor2_dif_negPart_cent[n] = new TProfile(Form("pCor2_dif_negPart_cent_%i", n), "", 9, 0, 9);
+    pCor4_dif_negPart_cent[n] = new TProfile(Form("pCor4_dif_negPart_cent_%i", n), "", 9, 0, 9);
   }
+
+  pCor2_dif_prot_cent_forv1 = new TProfile("pCor2_dif_prot_cent_forv1", "p^{+} cor2 func for v_1 Vs Cent", 9, 0, 9);
+  pCor2_dif_protBar_cent_forv1 = new TProfile("pCor2_dif_protBar_cent_forv1", "#bar{p} cor2 func for v_1 Vs Cent", 9, 0, 9);
+  pCor4_dif_prot_cent_forv1 = new TProfile("pCor4_dif_prot_cent_forv1", "p^{+} cor4 func for v_1 Vs Cent", 9, 0, 9);
+  pCor4_dif_protBar_cent_forv1 = new TProfile("pCor4_dif_protBar_cent_forv1", "#bar{p} cor4 func for v_1 Vs Cent", 9, 0, 9);
 
   Int_t eventCounter = 0;
   Int_t hundredIter = 0;
@@ -138,6 +155,8 @@ void analyseMcDst(const Char_t *inFile,
     double lQn_calc[15] = {}; // (cos(nphi), sin(nphi), cos(2nphi), sin(2nphi), numPart) * (n=1,2,3)
     double lpn_pos_cent_calc[15] = {};
     double lpn_neg_cent_calc[15] = {};
+    double lpn_prot_cent_calc[5] = {};
+    double lpn_protBar_cent_calc[5] = {};
 
     // Track analysis
     Int_t nTracks = dst->numberOfParticles();
@@ -177,30 +196,50 @@ void analyseMcDst(const Char_t *inFile,
       //Get pt and eta bins
       //int ipt = 
 
-      //Directed flow measurements
+      //........................Directed flow measurements........................
       if(fabs(particle->eta()) > 5.5) continue;
 
-      lQn_calc[0] += TMath::Cos(phi);
-      lQn_calc[1] += TMath::Sin(phi);
-      lQn_calc[2] += TMath::Cos(2*phi);
-      lQn_calc[3] += TMath::Sin(2*phi);
-      lQn_calc[4] += 1;
+      Qn_calc(lQn_calc, 0, phi);
 
-      //Elliptic and triangular flow measurements
+      if(pdg == 211 || pdg == 321){//Positive prticles v1 studing
+        Qn_calc(lpn_pos_cent_calc, 0, phi);
+      }
+
+      if(pdg == 2212){//Proton v1 studing
+        Qn_calc(lpn_prot_cent_calc, 0, phi);
+      }
+
+      if(pdg == -211 || pdg == -321){//Negative prticles v1 studing
+        Qn_calc(lpn_neg_cent_calc, 0, phi);
+      }
+
+      if(pdg == -2212){//Anti Proton v1 studing
+        Qn_calc(lpn_protBar_cent_calc, 0, phi);
+      }
+      //........................end of Directed flow measurements........................
+
+
+      //..................Elliptic and triangular flow measurements......................
       if(fabs(particle->eta()) > 1.) continue;
 
       for(int n = 1; n!=3; n++){
-        lQn_calc[5*n] += TMath::Cos((n+1)*phi);
-        lQn_calc[5*n+1] += TMath::Sin((n+1)*phi);
-        lQn_calc[5*n+2] += TMath::Cos(2*(n+1)*phi);
-        lQn_calc[5*n+3] += TMath::Sin(2*(n+1)*phi);
-        lQn_calc[5*n+4] += 1;
+        Qn_calc(lQn_calc, n, phi);
+
+        if(pdg == 211 || pdg == 321 || pdg == 2212){//Positive prticles flow studing
+          Qn_calc(lpn_pos_cent_calc, n, phi);
+        }
+
+        if(pdg == -211 || pdg == -321 || pdg == -2212){//Negative prticles flow studing
+          Qn_calc(lpn_neg_cent_calc, n, phi);
+        }
       }
+
+      //..................end of Elliptic and triangular flow measurements......................
 
     }//for(Int_t iTrk=0; iTrk<nTracks; iTrk++)
 
     
-    //Flow calculations by cumulants
+    //.......................Flow calculations by cumulants.......................
     if(cent<3) continue;
     //Reference flow calculation
     for(int n=0; n!=3; n++){
@@ -208,13 +247,44 @@ void analyseMcDst(const Char_t *inFile,
       TComplex Q2n(lQn_calc[5*n+2], lQn_calc[5*n+3]);
       int M = int(lQn_calc[5*n+4]);
 
+      TComplex pn_pos_cent(lpn_pos_cent_calc[5*n], lpn_pos_cent_calc[5*n+1]);
+      TComplex p2n_pos_cent(lpn_pos_cent_calc[5*n+2], lpn_pos_cent_calc[5*n+3]);
+      int mp_pos_cent = int(lpn_pos_cent_calc[5*n+4]);
+
+      TComplex pn_neg_cent(lpn_neg_cent_calc[5*n], lpn_neg_cent_calc[5*n+1]);
+      TComplex p2n_neg_cent(lpn_neg_cent_calc[5*n+2], lpn_neg_cent_calc[5*n+3]);
+      int mp_neg_cent = int(lpn_neg_cent_calc[5*n+4]);
+
       double ev_2cor_ref = Cacl_2cov_ref(Qn, M);
       double ev_4cor_ref = Cacl_4cov_ref(Qn, Q2n, M);
 
+      double ev_2cor_dif_pos_cent = Cacl_2cov_dif(Qn, pn_pos_cent, M, mp_pos_cent, mp_pos_cent);
+      double ev_2cor_dif_neg_cent = Cacl_2cov_dif(Qn, pn_neg_cent, M, mp_neg_cent, mp_neg_cent);
+
       pCor2_ref[n]->Fill(cent, ev_2cor_ref, M*(M-1));
       pCor4_ref[n]->Fill(cent, ev_4cor_ref, M*(M-1)*(M-2)*(M-3));
+
+      pCor2_dif_posPart_cent[n]->Fill(cent, ev_2cor_dif_pos_cent, mp_pos_cent*M - mp_pos_cent);
+      pCor2_dif_negPart_cent[n]->Fill(cent, ev_2cor_dif_neg_cent, mp_neg_cent*M - mp_neg_cent);
     }
   } //for(Long64_t iEvent=0; iEvent<events2read; iEvent++)
+
+  //Set TProfile titles
+  for(int n=0; n!=3; n++){
+    pCor2_ref[n]->SetTitle(Form("Cor2 ref cum for v_%i", n+1));
+    pCor4_ref[n]->SetTitle(Form("Cor4 ref cum for v_%i", n+1));
+    if(n!=0){//elliptic and triangular
+      pCor2_dif_posPart_cent[n]->SetTitle(Form("Cor2 dif cum for v_%i for (K^{+}, #pi^{+}, p^{+})", n+1));
+      pCor4_dif_posPart_cent[n]->SetTitle(Form("Cor4 dif cum for v_%i for (K^{+}, #pi^{+}, p^{+})", n+1));
+      pCor2_dif_negPart_cent[n]->SetTitle(Form("Cor2 dif cum for v_%i for (K^{-}, #pi^{-}, p^{-})", n+1));
+      pCor4_dif_negPart_cent[n]->SetTitle(Form("Cor4 dif cum for v_%i for (K^{-}, #pi^{-}, p^{-})", n+1));
+    }else{//directed
+      pCor2_dif_posPart_cent[n]->SetTitle(Form("Cor2 dif cum for v_%i for (K^{+}, #pi^{+})", n+1));
+      pCor4_dif_posPart_cent[n]->SetTitle(Form("Cor4 dif cum for v_%i for (K^{+}, #pi^{+})", n+1));
+      pCor2_dif_negPart_cent[n]->SetTitle(Form("Cor2 dif cum for v_%i for (K^{-}, #pi^{-})", n+1));
+      pCor4_dif_negPart_cent[n]->SetTitle(Form("Cor4 dif cum for v_%i for (K^{-}, #pi^{-})", n+1));
+    }
+  }
 
 
   oFile->Write();
@@ -265,7 +335,13 @@ int Get_refmult(McDst *dst){
 }
 
 
-
+void Qn_calc(double lQn_calc[], int nOrd, double phi){
+  lQn_calc[5*nOrd] += TMath::Cos((n+1)*phi);
+  lQn_calc[5*nOrd+1] += TMath::Sin((n+1)*phi);
+  lQn_calc[5*nOrd+2] += TMath::Cos(2*(n+1)*phi);
+  lQn_calc[5*nOrd+3] += TMath::Sin(2*(n+1)*phi);
+  lQn_calc[5*nOrd +4] += 1;
+}
 
 
 double Cacl_2cov_ref(TComplex Qn, int M){
