@@ -242,32 +242,49 @@ void analyseMcDst(const Char_t *inFile,
     
     //.......................Flow calculations by cumulants.......................
     if(cent<3) continue;
-    //Reference flow calculation
+    
     for(int n=0; n!=3; n++){
+      //Reference flow calculation
       TComplex Qn(lQn_calc[5*n], lQn_calc[5*n+1]);
       TComplex Q2n(lQn_calc[5*n+2], lQn_calc[5*n+3]);
       int M = int(lQn_calc[5*n+4]);
 
-      TComplex pn_pos_cent(lpn_pos_cent_calc[5*n], lpn_pos_cent_calc[5*n+1]);
-      TComplex p2n_pos_cent(lpn_pos_cent_calc[5*n+2], lpn_pos_cent_calc[5*n+3]);
-      int mp_pos_cent = int(lpn_pos_cent_calc[5*n+4]);
-
-      TComplex pn_neg_cent(lpn_neg_cent_calc[5*n], lpn_neg_cent_calc[5*n+1]);
-      TComplex p2n_neg_cent(lpn_neg_cent_calc[5*n+2], lpn_neg_cent_calc[5*n+3]);
-      int mp_neg_cent = int(lpn_neg_cent_calc[5*n+4]);
-
       double ev_2cor_ref = Cacl_2cov_ref(Qn, M);
       double ev_4cor_ref = Cacl_4cov_ref(Qn, Q2n, M);
-
-      double ev_2cor_dif_pos_cent = Cacl_2cov_dif(Qn, pn_pos_cent, M, mp_pos_cent, mp_pos_cent);
-      double ev_2cor_dif_neg_cent = Cacl_2cov_dif(Qn, pn_neg_cent, M, mp_neg_cent, mp_neg_cent);
 
       pCor2_ref[n]->Fill(cent, ev_2cor_ref, M*(M-1));
       pCor4_ref[n]->Fill(cent, ev_4cor_ref, M*(M-1)*(M-2)*(M-3));
 
-      pCor2_dif_posPart_cent[n]->Fill(cent, ev_2cor_dif_pos_cent, mp_pos_cent*M - mp_pos_cent);
-      pCor2_dif_negPart_cent[n]->Fill(cent, ev_2cor_dif_neg_cent, mp_neg_cent*M - mp_neg_cent);
-    }
+      //Diferential flow calculations
+      if(lpn_pos_cent_calc[5*n+4]!=0)
+      {//Centrality dependence of positive particles flow
+        TComplex pn_pos_cent(lpn_pos_cent_calc[5*n], lpn_pos_cent_calc[5*n+1]);
+        TComplex p2n_pos_cent(lpn_pos_cent_calc[5*n+2], lpn_pos_cent_calc[5*n+3]);
+        int mp_pos_cent = int(lpn_pos_cent_calc[5*n+4]);
+
+        double ev_2cor_dif_pos_cent = Cacl_2cov_dif(Qn, pn_pos_cent, M, mp_pos_cent, mp_pos_cent);
+        double ev_4cor_dif_pos_cent = Cacl_4cov_dif(Qn, pn_pos_cent, pn_pos_cent, Q2n, p2n_pos_cent, M, mp_pos_cent, mp_pos_cent);
+
+        pCor2_dif_posPart_cent[n]->Fill(cent, ev_2cor_dif_pos_cent, mp_pos_cent*M - mp_pos_cent);
+        pCor4_dif_posPart_cent[n]->Fill(cent, ev_4cor_dif_pos_cent, (mp_pos_cent*M - 3*mp_pos_cent)*(M-1)*(M-2));
+      }//
+
+
+      if(lpn_neg_cent_calc[5*n+4]!=0)
+      {//Centrality dependence of negative particles flow
+        TComplex pn_neg_cent(lpn_neg_cent_calc[5*n], lpn_neg_cent_calc[5*n+1]);
+        TComplex p2n_neg_cent(lpn_neg_cent_calc[5*n+2], lpn_neg_cent_calc[5*n+3]);
+        int mp_neg_cent = int(lpn_neg_cent_calc[5*n+4]);
+
+        double ev_2cor_dif_neg_cent = Cacl_2cov_dif(Qn, pn_neg_cent, M, mp_neg_cent, mp_neg_cent);
+        double ev_4cor_dif_neg_cent = Cacl_4cov_dif(Qn, pn_neg_cent, pn_neg_cent, Q2n, p2n_neg_cent, M, mp_neg_cent, mp_neg_cent);
+
+        pCor2_dif_negPart_cent[n]->Fill(cent, ev_2cor_dif_neg_cent, mp_neg_cent*M - mp_neg_cent);
+        pCor4_dif_negPart_cent[n]->Fill(cent, ev_4cor_dif_neg_cent, (mp_neg_cent*M - 3*mp_neg_cent)*(M-1)*(M-2));
+
+      }//    
+      
+    }//for(int n=0; n!=3; n++)
   } //for(Long64_t iEvent=0; iEvent<events2read; iEvent++)
 
   //Set TProfile titles
