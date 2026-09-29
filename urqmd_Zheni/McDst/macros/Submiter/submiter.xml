@@ -14,7 +14,7 @@
     </command>
 
 <!-- Get input files from get_file_lis.pl -->
-<input URL="filelist:/star/data01/pwg/mmorozov/urqmd/oo/6gev/filelist/filelist_subdata0.list"/>
+<input URL="filelist:/star/data01/pwg/mmorozov/urqmd/oo/6gev/filelist/filelist_subdata0_test.list"/>
 <stdout URL="file:/star/data01/pwg/mmorozov/urqmd/oo/6gev/log/$JOBID.out"/>
 <stderr URL="file:/star/data01/pwg/mmorozov/urqmd/oo/6gev/log/$JOBID.err"/>
 <output fromScratch="$JOBID.root" toURL="file:/star/data01/pwg/mmorozov/urqmd/oo/6gev/data/"/>

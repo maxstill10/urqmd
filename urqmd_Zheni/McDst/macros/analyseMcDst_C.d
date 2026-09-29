@@ -81,10 +81,13 @@
 ./analyseMcDst_C.so: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/opt/spack/linux-rhel7-x86_64/gcc-4.8.5/root-5.34.38-eyawaunrtayjlt3aqon5claakm3c7xl7/include/TRandom.h
 ./analyseMcDst_C.so: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/opt/spack/linux-rhel7-x86_64/gcc-4.8.5/root-5.34.38-eyawaunrtayjlt3aqon5claakm3c7xl7/include/TComplex.h
 ./analyseMcDst_C.so: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/opt/spack/linux-rhel7-x86_64/gcc-4.8.5/root-5.34.38-eyawaunrtayjlt3aqon5claakm3c7xl7/include/TProfile.h
-./analyseMcDst_C.so: ../McDstReader.h
+./analyseMcDst_C.so: /star/u/mmorozov/urqmd/urqmd_Zheni/McDst/McDstReader.h
 ./analyseMcDst_C.so: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/opt/spack/linux-rhel7-x86_64/gcc-4.8.5/root-5.34.38-eyawaunrtayjlt3aqon5claakm3c7xl7/include/TClonesArray.h
-./analyseMcDst_C.so: ../McDst.h ../McArrays.h ../McRun.h ../McDst.h
-./analyseMcDst_C.so: ../McEvent.h
+./analyseMcDst_C.so: /star/u/mmorozov/urqmd/urqmd_Zheni/McDst/McDst.h
+./analyseMcDst_C.so: /star/u/mmorozov/urqmd/urqmd_Zheni/McDst/McArrays.h
+./analyseMcDst_C.so: /star/u/mmorozov/urqmd/urqmd_Zheni/McDst/McRun.h
+./analyseMcDst_C.so: /star/u/mmorozov/urqmd/urqmd_Zheni/McDst/McDst.h
+./analyseMcDst_C.so: /star/u/mmorozov/urqmd/urqmd_Zheni/McDst/McEvent.h
 ./analyseMcDst_C.so: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/opt/spack/linux-rhel7-x86_64/gcc-4.8.5/root-5.34.38-eyawaunrtayjlt3aqon5claakm3c7xl7/include/TLorentzVector.h
 ./analyseMcDst_C.so: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/opt/spack/linux-rhel7-x86_64/gcc-4.8.5/root-5.34.38-eyawaunrtayjlt3aqon5claakm3c7xl7/include/TVector3.h
 ./analyseMcDst_C.so: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/opt/spack/linux-rhel7-x86_64/gcc-4.8.5/root-5.34.38-eyawaunrtayjlt3aqon5claakm3c7xl7/include/TVector2.h
@@ -97,11 +100,11 @@
 ./analyseMcDst_C.so: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/opt/spack/linux-rhel7-x86_64/gcc-4.8.5/root-5.34.38-eyawaunrtayjlt3aqon5claakm3c7xl7/include/TMatrixFUtils.h
 ./analyseMcDst_C.so: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/opt/spack/linux-rhel7-x86_64/gcc-4.8.5/root-5.34.38-eyawaunrtayjlt3aqon5claakm3c7xl7/include/TMatrixFUtilsfwd.h
 ./analyseMcDst_C.so: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/opt/spack/linux-rhel7-x86_64/gcc-4.8.5/root-5.34.38-eyawaunrtayjlt3aqon5claakm3c7xl7/include/TRotation.h
-./analyseMcDst_C.so: ../McParticle.h
+./analyseMcDst_C.so: /star/u/mmorozov/urqmd/urqmd_Zheni/McDst/McParticle.h
 ./analyseMcDst_C.so: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/opt/spack/linux-rhel7-x86_64/gcc-4.8.5/root-5.34.38-eyawaunrtayjlt3aqon5claakm3c7xl7/include/TDatabasePDG.h
 ./analyseMcDst_C.so: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/opt/spack/linux-rhel7-x86_64/gcc-4.8.5/root-5.34.38-eyawaunrtayjlt3aqon5claakm3c7xl7/include/TParticlePDG.h
 ./analyseMcDst_C.so: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/opt/spack/linux-rhel7-x86_64/gcc-4.8.5/root-5.34.38-eyawaunrtayjlt3aqon5claakm3c7xl7/include/TParticleClassPDG.h
 ./analyseMcDst_C.so: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/opt/spack/linux-rhel7-x86_64/gcc-4.8.5/root-5.34.38-eyawaunrtayjlt3aqon5claakm3c7xl7/include/TParticle.h
-./analyseMcDst_C.so: ../McRun.h
+./analyseMcDst_C.so: /star/u/mmorozov/urqmd/urqmd_Zheni/McDst/McRun.h
 ./analyseMcDst_C.so: /cvmfs/star.sdcc.bnl.gov/star-spack/spack/opt/spack/linux-rhel7-x86_64/gcc-4.8.5/root-5.34.38-eyawaunrtayjlt3aqon5claakm3c7xl7/include/cintdictversion.h /cvmfs/star.sdcc.bnl.gov/star-spack/spack/opt/spack/linux-rhel7-x86_64/gcc-4.8.5/root-5.34.38-eyawaunrtayjlt3aqon5claakm3c7xl7/include/RVersion.h
 analyseMcDst_C__ROOTBUILDVERSION= 5.34/38

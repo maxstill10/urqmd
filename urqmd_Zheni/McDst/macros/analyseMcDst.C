@@ -25,11 +25,11 @@
 #include "TProfile.h"
 
 // McDst headers
-#include "../McDstReader.h"
-#include "../McDst.h"
-#include "../McEvent.h"
-#include "../McParticle.h"
-#include "../McRun.h"
+#include "/star/u/mmorozov/urqmd/urqmd_Zheni/McDst/McDstReader.h"
+#include "/star/u/mmorozov/urqmd/urqmd_Zheni/McDst/McDst.h"
+#include "/star/u/mmorozov/urqmd/urqmd_Zheni/McDst/McEvent.h"
+#include "/star/u/mmorozov/urqmd/urqmd_Zheni/McDst/McParticle.h"
+#include "/star/u/mmorozov/urqmd/urqmd_Zheni/McDst/McRun.h"
 
 //My functions
 int GetCentrality(int refMult);
@@ -370,7 +370,7 @@ double Cacl_4cov_dif(TComplex Qn, TComplex pn, TComplex qn, TComplex Q2n, TCompl
   TComplex qn_star = TComplex::Conjugate(qn);
   TComplex Q2n_star = TComplex::Conjugate(Q2n);
   double Qn_squared = Qn.Rho2();
-  double up_part = (pn*Qn_star*Qn_squared - q2n*Qn_star*Qn_star - pn*Qn_star*Q2n_star - 2*M*pn*Qn_star - 2*mq*Qn_squared +\
+  double up_part = (pn*Qn_star*Qn_squared - q2n*Qn_star*Qn_star - pn*Qn*Q2n_star - 2*M*pn*Qn_star - 2*mq*Qn_squared +\
                     7*qn*Qn_star - Qn*qn_star + q2n*Q2n_star + 2*pn*Qn_star + 2*mq*M - 6*mq).Re();
   return up_part / (mp*M - 3*mq) / (M-1) / (M-2);
 }
