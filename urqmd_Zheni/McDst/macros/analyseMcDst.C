@@ -83,28 +83,36 @@ void analyseMcDst(const Char_t *inFile,
 
   TProfile *pCor2_ref[3];
   TProfile *pCor4_ref[3];
-  TProfile *pCor2_dif_posPart_cent[3];
-  TProfile *pCor4_dif_posPart_cent[3];
-  TProfile *pCor2_dif_negPart_cent[3];
-  TProfile *pCor4_dif_negPart_cent[3];
-  TProfile *pCor2_dif_prot_cent_forv1;
-  TProfile *pCor2_dif_protBar_cent_forv1;
-  TProfile *pCor4_dif_prot_cent_forv1;
-  TProfile *pCor4_dif_protBar_cent_forv1;
+  TProfile *pCov24_ref[3];
+  //diff corr
+  TProfile *pCor2_dif_cent[3][2]; //(v1+v2+v3)x(pos, neg)
+  TProfile *pCor4_dif_cent[3][2];
+  TProfile *pCov_dif_cent[3][2][5];//(v1+v2+v3)x(pos, neg)x(22dif, 24dif, 42dif, 44dif, 2dif4dif)
+  TProfile *pCor2_dif_prot_cent_forv1[2];//p+p_bar
+  TProfile *pCor4_dif_prot_cent_forv1[2];
 
   for(int n=0; n!=3; n++){
     pCor2_ref[n] = new TProfile(Form("pCor2_ref_%i", n), "", 9, 0, 9);
     pCor4_ref[n] = new TProfile(Form("pCor4_ref_%i", n), "", 9, 0, 9);
-    pCor2_dif_posPart_cent[n] = new TProfile(Form("pCor2_dif_posPart_cent_%i", n), "", 9, 0, 9);
-    pCor4_dif_posPart_cent[n] = new TProfile(Form("pCor4_dif_posPart_cent_%i", n), "", 9, 0, 9);
-    pCor2_dif_negPart_cent[n] = new TProfile(Form("pCor2_dif_negPart_cent_%i", n), "", 9, 0, 9);
-    pCor4_dif_negPart_cent[n] = new TProfile(Form("pCor4_dif_negPart_cent_%i", n), "", 9, 0, 9);
+    pCov24_ref[n] = new TProfile(Form("pCov24_ref_%i", n), "", 9, 0, 9);
+    //diff corr
+    for(int ich=0; ich!=2; ich++){
+      pCor2_dif_cent[n][ich] = new TProfile(Form("pCor2_dif_cent_%i_%i", n, ich), "", 9, 0, 9);
+      pCor4_dif_cent[n][ich] = new TProfile(Form("pCor4_dif_cent_%i_%i", n, ich), "", 9, 0, 9);
+
+      //covariance
+      for(int icov = 0; icov!=5; icov++){
+        pCov_dif_cent[n][ich][icov] = new TProfile(Form("pCov_dif_cent_%i_%i_%i", n, ich, icov), "", 9, 0, 9);
+      }
+    }
+    
+    
   }
 
-  pCor2_dif_prot_cent_forv1 = new TProfile("pCor2_dif_prot_cent_forv1", "p^{+} cor2 func for v_1 Vs Cent", 9, 0, 9);
-  pCor2_dif_protBar_cent_forv1 = new TProfile("pCor2_dif_protBar_cent_forv1", "#bar{p} cor2 func for v_1 Vs Cent", 9, 0, 9);
-  pCor4_dif_prot_cent_forv1 = new TProfile("pCor4_dif_prot_cent_forv1", "p^{+} cor4 func for v_1 Vs Cent", 9, 0, 9);
-  pCor4_dif_protBar_cent_forv1 = new TProfile("pCor4_dif_protBar_cent_forv1", "#bar{p} cor4 func for v_1 Vs Cent", 9, 0, 9);
+  for(int ich=0; ich!=2; ich++){
+    pCor2_dif_prot_cent_forv1[ich] = new TProfile(Form("pCor2_dif_prot_cent_forv1_%i", ich), "", 9, 0, 9);
+    pCor4_dif_prot_cent_forv1[ich] = new TProfile(Form("pCor4_dif_prot_cent_forv1_%i", ich), "", 9, 0, 9);
+  }
 
   Int_t eventCounter = 0;
   Int_t hundredIter = 0;
@@ -252,21 +260,32 @@ void analyseMcDst(const Char_t *inFile,
       double ev_2cor_ref = Cacl_2cov_ref(Qn, M);
       double ev_4cor_ref = Cacl_4cov_ref(Qn, Q2n, M);
 
-      pCor2_ref[n]->Fill(cent, ev_2cor_ref, M*(M-1));
-      pCor4_ref[n]->Fill(cent, ev_4cor_ref, M*(M-1)*(M-2)*(M-3));
+      double weight_ref[2] = {M*(M-1), M*(M-1)*(M-2)*(M-3)};//w2_ref, w4_ref
+
+      pCor2_ref[n]->Fill(cent, ev_2cor_ref, weight_ref[0]);
+      pCor4_ref[n]->Fill(cent, ev_4cor_ref, weight_ref[1]);
+      pCov24_ref[n]->Fill(cent, ev_2cor_ref*ev_4cor_ref, weight_ref[0]*weight_ref[1]);
 
       //Diferential flow calculations
       if(lpn_pos_cent_calc[5*n+4]!=0)
       {//Centrality dependence of positive particles flow
         TComplex pn_pos_cent(lpn_pos_cent_calc[5*n], lpn_pos_cent_calc[5*n+1]);
         TComplex p2n_pos_cent(lpn_pos_cent_calc[5*n+2], lpn_pos_cent_calc[5*n+3]);
-        int mp_pos_cent = int(lpn_pos_cent_calc[5*n+4]);
+        int mp_cent = int(lpn_pos_cent_calc[5*n+4]);
 
-        double ev_2cor_dif_pos_cent = Cacl_2cov_dif(Qn, pn_pos_cent, M, mp_pos_cent, mp_pos_cent);
-        double ev_4cor_dif_pos_cent = Cacl_4cov_dif(Qn, pn_pos_cent, pn_pos_cent, Q2n, p2n_pos_cent, M, mp_pos_cent, mp_pos_cent);
+        double ev_2cor_dif_cent = Cacl_2cov_dif(Qn, pn_pos_cent, M, mp_cent, mp_cent);
+        double ev_4cor_dif_cent = Cacl_4cov_dif(Qn, pn_pos_cent, pn_pos_cent, Q2n, p2n_pos_cent, M, mp_cent, mp_cent);
 
-        pCor2_dif_posPart_cent[n]->Fill(cent, ev_2cor_dif_pos_cent, mp_pos_cent*M - mp_pos_cent);
-        pCor4_dif_posPart_cent[n]->Fill(cent, ev_4cor_dif_pos_cent, (mp_pos_cent*M - 3*mp_pos_cent)*(M-1)*(M-2));
+        double weight_dif[2] = {mp_cent*M - mp_cent, (mp_cent*M - 3*mp_cent)*(M-1)*(M-2)};//wc2_dif, wc4_dif
+        
+        pCor2_dif_cent[n][0]->Fill(cent, ev_2cor_dif_cent, weight_dif[0]);
+        pCor4_dif_cent[n][0]->Fill(cent, ev_4cor_dif_cent, weight_dif[1]);
+        //covariance
+        pCov_dif_cent[n][0][0]->Fill(cent, ev_2cor_ref*ev_2cor_dif_cent, weight_ref[0]*weight_dif[0]);
+        pCov_dif_cent[n][0][1]->Fill(cent, ev_2cor_ref*ev_4cor_dif_cent, weight_ref[0]*weight_dif[1]);
+        pCov_dif_cent[n][0][2]->Fill(cent, ev_4cor_ref*ev_2cor_dif_cent, weight_ref[1]*weight_dif[0]);
+        pCov_dif_cent[n][0][3]->Fill(cent, ev_4cor_ref*ev_4cor_dif_cent, weight_ref[1]*weight_dif[1]);
+        pCov_dif_cent[n][0][4]->Fill(cent, ev_2cor_dif_cent*ev_4cor_dif_cent, weight_dif[0]*weight_dif[1]);
       }//
 
 
@@ -274,13 +293,21 @@ void analyseMcDst(const Char_t *inFile,
       {//Centrality dependence of negative particles flow
         TComplex pn_neg_cent(lpn_neg_cent_calc[5*n], lpn_neg_cent_calc[5*n+1]);
         TComplex p2n_neg_cent(lpn_neg_cent_calc[5*n+2], lpn_neg_cent_calc[5*n+3]);
-        int mp_neg_cent = int(lpn_neg_cent_calc[5*n+4]);
+        int mp_cent = int(lpn_neg_cent_calc[5*n+4]);
 
-        double ev_2cor_dif_neg_cent = Cacl_2cov_dif(Qn, pn_neg_cent, M, mp_neg_cent, mp_neg_cent);
-        double ev_4cor_dif_neg_cent = Cacl_4cov_dif(Qn, pn_neg_cent, pn_neg_cent, Q2n, p2n_neg_cent, M, mp_neg_cent, mp_neg_cent);
+        double ev_2cor_dif_cent = Cacl_2cov_dif(Qn, pn_neg_cent, M, mp_cent, mp_cent);
+        double ev_4cor_dif_cent = Cacl_4cov_dif(Qn, pn_neg_cent, pn_neg_cent, Q2n, p2n_neg_cent, M, mp_cent, mp_cent);
 
-        pCor2_dif_negPart_cent[n]->Fill(cent, ev_2cor_dif_neg_cent, mp_neg_cent*M - mp_neg_cent);
-        pCor4_dif_negPart_cent[n]->Fill(cent, ev_4cor_dif_neg_cent, (mp_neg_cent*M - 3*mp_neg_cent)*(M-1)*(M-2));
+        double weight_dif[2] = {mp_cent*M - mp_cent, (mp_cent*M - 3*mp_cent)*(M-1)*(M-2)};//wc2_dif, wc4_dif
+
+        pCor2_dif_cent[n][1]->Fill(cent, ev_2cor_dif_cent, weight_dif[0]);
+        pCor4_dif_cent[n][1]->Fill(cent, ev_4cor_dif_cent, weight_dif[1]);
+        //covariance
+        pCov_dif_cent[n][1][0]->Fill(cent, ev_2cor_ref*ev_2cor_dif_cent, weight_ref[0]*weight_dif[0]);
+        pCov_dif_cent[n][1][1]->Fill(cent, ev_2cor_ref*ev_4cor_dif_cent, weight_ref[0]*weight_dif[1]);
+        pCov_dif_cent[n][1][2]->Fill(cent, ev_4cor_ref*ev_2cor_dif_cent, weight_ref[1]*weight_dif[0]);
+        pCov_dif_cent[n][1][3]->Fill(cent, ev_4cor_ref*ev_4cor_dif_cent, weight_ref[1]*weight_dif[1]);
+        pCov_dif_cent[n][1][4]->Fill(cent, ev_2cor_dif_cent*ev_4cor_dif_cent, weight_dif[0]*weight_dif[1]);
 
       }//    
       
@@ -292,17 +319,33 @@ void analyseMcDst(const Char_t *inFile,
     pCor2_ref[n]->SetTitle(Form("Cor2 ref cum for v_%i", n+1));
     pCor4_ref[n]->SetTitle(Form("Cor4 ref cum for v_%i", n+1));
     if(n!=0){//elliptic and triangular
-      pCor2_dif_posPart_cent[n]->SetTitle(Form("Cor2 dif cum for v_%i for (K^{+}, #pi^{+}, p^{+})", n+1));
-      pCor4_dif_posPart_cent[n]->SetTitle(Form("Cor4 dif cum for v_%i for (K^{+}, #pi^{+}, p^{+})", n+1));
-      pCor2_dif_negPart_cent[n]->SetTitle(Form("Cor2 dif cum for v_%i for (K^{-}, #pi^{-}, p^{-})", n+1));
-      pCor4_dif_negPart_cent[n]->SetTitle(Form("Cor4 dif cum for v_%i for (K^{-}, #pi^{-}, p^{-})", n+1));
+      pCor2_dif_cent[n][0]->SetTitle(Form("Cor2 dif cum for v_%i for (K^{+}, #pi^{+}, p^{+})", n+1));
+      pCor4_dif_cent[n][0]->SetTitle(Form("Cor4 dif cum for v_%i for (K^{+}, #pi^{+}, p^{+})", n+1));
+      pCor2_dif_cent[n][1]->SetTitle(Form("Cor2 dif cum for v_%i for (K^{-}, #pi^{-}, p^{-})", n+1));
+      pCor4_dif_cent[n][1]->SetTitle(Form("Cor4 dif cum for v_%i for (K^{-}, #pi^{-}, p^{-})", n+1));
     }else{//directed
-      pCor2_dif_posPart_cent[n]->SetTitle(Form("Cor2 dif cum for v_%i for (K^{+}, #pi^{+})", n+1));
-      pCor4_dif_posPart_cent[n]->SetTitle(Form("Cor4 dif cum for v_%i for (K^{+}, #pi^{+})", n+1));
-      pCor2_dif_negPart_cent[n]->SetTitle(Form("Cor2 dif cum for v_%i for (K^{-}, #pi^{-})", n+1));
-      pCor4_dif_negPart_cent[n]->SetTitle(Form("Cor4 dif cum for v_%i for (K^{-}, #pi^{-})", n+1));
+      pCor2_dif_cent[n][0]->SetTitle(Form("Cor2 dif cum for v_%i for (K^{+}, #pi^{+})", n+1));
+      pCor4_dif_cent[n][0]->SetTitle(Form("Cor4 dif cum for v_%i for (K^{+}, #pi^{+})", n+1));
+      pCor2_dif_cent[n][1]->SetTitle(Form("Cor2 dif cum for v_%i for (K^{-}, #pi^{-})", n+1));
+      pCor4_dif_cent[n][1]->SetTitle(Form("Cor4 dif cum for v_%i for (K^{-}, #pi^{-})", n+1));
+    }
+
+    //Covariance
+    for(int ich=0; ich!=2; ich++){
+      pCov_dif_cent[n][ich][0]->SetTitle(Form("Covariance between 22' for v_%i if charge=%i", n+1, 1-2*ich));
+      pCov_dif_cent[n][ich][1]->SetTitle(Form("Covariance between 24' for v_%i if charge=%i", n+1, 1-2*ich));
+      pCov_dif_cent[n][ich][2]->SetTitle(Form("Covariance between 42' for v_%i if charge=%i", n+1, 1-2*ich));
+      pCov_dif_cent[n][ich][3]->SetTitle(Form("Covariance between 44' for v_%i if charge=%i", n+1, 1-2*ich));
+      pCov_dif_cent[n][ich][4]->SetTitle(Form("Covariance between 2'4' for v_%i if charge=%i", n+1, 1-2*ich));
     }
   }
+
+  //Hists for proton v1  
+  pCor2_dif_prot_cent_forv1[0]->SetTitle("Cor2 dif cum for p^{+} v_{1}");
+  pCor2_dif_prot_cent_forv1[1]->SetTitle("Cor2 dif cum for p^{-} v_{1}");
+  pCor4_dif_prot_cent_forv1[0]->SetTitle("Cor4 dif cum for p^{+} v_{1}");
+  pCor4_dif_prot_cent_forv1[1]->SetTitle("Cor4 dif cum for p^{-} v_{1}");
+  
 
 
   oFile->Write();
@@ -391,4 +434,5 @@ double Cacl_4cov_dif(TComplex Qn, TComplex pn, TComplex qn, TComplex Q2n, TCompl
                     7*qn*Qn_star - Qn*qn_star + q2n*Q2n_star + 2*pn*Qn_star + 2*mq*M - 6*mq).Re();
   return up_part / (mp*M - 3*mq) / (M-1) / (M-2);
 }
+
 
