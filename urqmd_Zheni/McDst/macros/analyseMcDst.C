@@ -12,6 +12,7 @@
 // ROOT headers
 #include "TROOT.h"
 #include "TFile.h"
+#include "TDirectory"
 #include "TChain.h"
 #include "TTree.h"
 #include "TSystem.h"
@@ -41,7 +42,10 @@ double Cacl_2cov_dif(TComplex Qn, TComplex pn, int M, int mp, int mq);
 double Cacl_4cov_dif(TComplex Qn, TComplex pn, TComplex qn, TComplex Q2n, TComplex q2n, int M, int mp, int mq);
 
 //pt and eta intervals
-//double const pt_intervals[] = {0.15, 0.4, 0.6, 0.8, 1., 1.2, 1.4, 1.6, 1.8, 2., 2.4, }
+const int n_pt_points = 12;
+const double pt_intervals[] = {0.15, 0.4, 0.6, 0.8, 1., 1.2, 1.4, 1.6, 1.8, 2., 2.4, 2.8, 3.};
+
+const int n_eta_points = 28;
 
 
 // inFile - is a name of name.uDst.root file or a name
@@ -77,9 +81,13 @@ void analyseMcDst(const Char_t *inFile,
   std::cout << "Number of events to read: " << events2read << std::endl;
 
   TFile *oFile = new TFile(oFileName, "RECREATE");
+  oFile->cd();
+  TDirectory *ptDep = oFile->mkdir("pt_dependences");
+  TDirectory *etaDep = oFile->mkdir("eta_dependences");
 
   //Hist initialization
   TH1F *hpT = new TH1F("hpT", "p_{T} of particles", 570, 0.15, 3);
+  TH1F *hcent = new TH1F("hcent", "Event Centrality", 9, 0, 9);
 
   TProfile *pCor2_ref[3];
   TProfile *pCor4_ref[3];
@@ -113,6 +121,64 @@ void analyseMcDst(const Char_t *inFile,
     pCor2_dif_prot_cent_forv1[ich] = new TProfile(Form("pCor2_dif_prot_cent_forv1_%i", ich), "", 9, 0, 9);
     pCor4_dif_prot_cent_forv1[ich] = new TProfile(Form("pCor4_dif_prot_cent_forv1_%i", ich), "", 9, 0, 9);
   }
+
+  
+  //pt hists initialization
+  ptDep->cd();
+
+  //diff corr
+  TProfile *pCor2_dif_pt[3][2][n_pt_points]; //(v1+v2+v3)x(pos, neg)
+  TProfile *pCor4_dif_pt[3][2][n_pt_points];
+  TProfile *pCov_dif_pt[3][2][n_pt_points][5];//(v1+v2+v3)x(pos, neg)x(22dif, 24dif, 42dif, 44dif, 2dif4dif)
+
+  for(int n=0; n!=3; n++){
+    //diff corr
+    for(int ich=0; ich!=2; ich++){
+      for(int ipt=0; ipt!=n_pt_points; ipt++){
+        pCor2_dif_pt[n][ich][ipt] = new TProfile(Form("pCor2_dif_pt_%i_%i_%i", n, ich, ipt), "", 9, 0, 9);
+        pCor4_dif_pt[n][ich][ipt] = new TProfile(Form("pCor4_dif_pt_%i_%i_%i", n, ich, ipt), "", 9, 0, 9);
+
+        //covariance
+        for(int icov = 0; icov!=5; icov++){
+          pCov_dif_pt[n][ich][ipt][icov] = new TProfile(Form("pCov_dif_pt_%i_%i_%i_%i", n, ich, ipt, icov), "", 9, 0, 9);
+        }
+      }
+    }    
+  }
+
+  oFile->cd();
+  //end of pt hists initialization
+
+  //eta hists initialization
+  etaDep->cd();
+
+  TProfile *pCor2_dif_prot_eta[2][n_eta_points]; //proton only (pos, neg)
+  TProfile *pCor4_dif_prot_eta[2][n_eta_points];
+  TProfile *pCor2_dif_eta[2][n_eta_points]; //pion+kaon (pos, neg)
+  TProfile *pCor4_dif_eta[2][n_eta_points];
+
+  TProfile *pCov_dif_eta[2][n_eta_points][5];
+  TProfile *pCov_dif_prot_eta[2][n_eta_points][5];
+  
+  for(int ich=0; ich!=2; ich++){
+    for(int ieta=0; ieta!=n_eta_points; ieta++){
+      pCor2_dif_prot_eta[ich][ieta] = new TProfile(Form("pCor2_dif_prot_eta_%i_%i", ich, ieta), "", 9, 0, 9);
+      pCor4_dif_prot_eta[ich][ieta] = new TProfile(Form("pCor4_dif_prot_eta_%i_%i", ich, ieta), "", 9, 0, 9);
+
+      pCor2_dif_eta[ich][ieta] = new TProfile(Form("pCor2_dif_eta_%i_%i", ich, ieta), "", 9, 0, 9);
+      pCor4_dif_eta[ich][ieta] = new TProfile(Form("pCor4_dif_eta_%i_%i", ich, ieta), "", 9, 0, 9);
+
+      //covariance
+      for(int icov = 0; icov!=5; icov++){
+        pCov_dif_eta[ich][ieta][icov] = new TProfile(Form("pCov_dif_eta_%i_%i_%i", ich, ieta, icov), "", 9, 0, 9);
+        pCov_dif_prot_eta[ich][ieta][icov] = new TProfile(Form("pCov_dif_prot_eta_%i_%i_%i", ich, ieta, icov), "", 9, 0, 9);
+      }
+    }
+  }
+
+
+  oFile->cd();
+  //end of eta hists initialization
 
   Int_t eventCounter = 0;
   Int_t hundredIter = 0;
@@ -158,14 +224,25 @@ void analyseMcDst(const Char_t *inFile,
     int refMult = Get_refmult(dst) ;
     int cent = GetCentrality(refMult);
     if(cent<0) continue;
+    hcent->Fill(cent);
     
 
     //Variables for particle number counting
     double lQn_calc[15] = {}; // (cos(nphi), sin(nphi), cos(2nphi), sin(2nphi), numPart) * (n=1,2,3)
     double lpn_pos_cent_calc[15] = {};
     double lpn_neg_cent_calc[15] = {};
-    double lpn_prot_cent_calc[5] = {};
-    double lpn_protBar_cent_calc[5] = {};
+    double lpn_prot_cent_calc[5] = {}; //for proton v1
+    double lpn_protBar_cent_calc[5] = {}; //n_pt_points
+
+    //for pt
+    double lpn_pos_pt_calc[n_pt_points][15] = {};// (cos(nphi), sin(nphi), cos(2nphi), sin(2nphi), numPart) * (n=1,2,3)
+    double lpn_neg_pt_calc[n_pt_points][15] = {};// (cos(nphi), sin(nphi), cos(2nphi), sin(2nphi), numPart) * (n=1,2,3)
+
+    //for eta
+    double lpn_pos_eta_calc[n_eta_points][5] = {};// (cos(nphi), sin(nphi), cos(2nphi), sin(2nphi), numPart) for (K+, pi+)
+    double lpn_neg_eta_calc[n_eta_points][5] = {};// (cos(nphi), sin(nphi), cos(2nphi), sin(2nphi), numPart) for (K-, pi-)
+    double lpn_prot_eta_calc[n_eta_points][5] = {};// (cos(nphi), sin(nphi), cos(2nphi), sin(2nphi), numPart) for (p+)
+    double lpn_protBar_eta_calc[n_eta_points][5] = {};// (cos(nphi), sin(nphi), cos(2nphi), sin(2nphi), numPart) for (p-)
 
     // Track analysis
     Int_t nTracks = dst->numberOfParticles();
@@ -203,27 +280,38 @@ void analyseMcDst(const Char_t *inFile,
       hpT->Fill(pt);
 
       //Get pt and eta bins
-      //int ipt = 
+      int pt_bin = -1;
+      for(int ipt = 0; ipt!=n_pt_points; ipt++){
+        if(pt>=pt_intervals[ipt] && pt<pt_intervals[ipt+1]) { pt_bin = ipt; break;}
+      }
+      if(pt>=pt_intervals[n_pt_points]) pt_bin = n_pt_points;
 
       //........................Directed flow measurements........................
-      if(fabs(particle->eta()) > 5.5) continue;
+      if(fabs(particle->eta()) >= 5.5) continue;
+
+      double delta_eta = 11.0 / n_eta_points;
+      int eta_bin = (int)((eta + 5.5) / delta_eta);
 
       Qn_calc(lQn_calc, 0, phi);
 
       if(pdg == 211 || pdg == 321){//Positive prticles v1 studing
         Qn_calc(lpn_pos_cent_calc, 0, phi);
+        Qn_calc(lpn_pos_eta_calc[eta_bin], 0, phi);
       }
 
       if(pdg == 2212){//Proton v1 studing
         Qn_calc(lpn_prot_cent_calc, 0, phi);
+        Qn_calc(lpn_prot_eta_calc[eta_bin], 0, phi);
       }
 
       if(pdg == -211 || pdg == -321){//Negative prticles v1 studing
         Qn_calc(lpn_neg_cent_calc, 0, phi);
+        Qn_calc(lpn_neg_eta_calc[eta_bin], 0, phi);
       }
 
       if(pdg == -2212){//Anti Proton v1 studing
         Qn_calc(lpn_protBar_cent_calc, 0, phi);
+        Qn_calc(lpn_protBar_eta_calc[eta_bin], 0, phi);
       }
       //........................end of Directed flow measurements........................
 
@@ -235,11 +323,13 @@ void analyseMcDst(const Char_t *inFile,
         Qn_calc(lQn_calc, n, phi);
 
         if(pdg == 211 || pdg == 321 || pdg == 2212){//Positive prticles flow studing
-          Qn_calc(lpn_pos_cent_calc, n, phi);
+          Qn_calc(lpn_pos_cent_calc, n, phi); //lpn_pos_cent_calc
+          Qn_calc(lpn_pos_pt_calc[pt_bin], n, phi);
         }
 
         if(pdg == -211 || pdg == -321 || pdg == -2212){//Negative prticles flow studing
           Qn_calc(lpn_neg_cent_calc, n, phi);
+          Qn_calc(lpn_neg_pt_calc[pt_bin], n, phi);
         }
       }
 
@@ -309,7 +399,149 @@ void analyseMcDst(const Char_t *inFile,
         pCov_dif_cent[n][1][3]->Fill(cent, ev_4cor_ref*ev_4cor_dif_cent, weight_ref[1]*weight_dif[1]);
         pCov_dif_cent[n][1][4]->Fill(cent, ev_2cor_dif_cent*ev_4cor_dif_cent, weight_dif[0]*weight_dif[1]);
 
-      }//    
+      }//
+      
+      
+      //............................Pt dependeces...................
+      for(int ipt=0; ipt!=n_pt_points; ipt++){
+        if(lpn_pos_pt_calc[ipt][5*n+4]!=0)
+        {//pT dependence of positive particles flow
+          TComplex pn_pos_cent(lpn_pos_pt_calc[ipt][5*n], lpn_pos_pt_calc[ipt][5*n+1]);
+          TComplex p2n_pos_cent(lpn_pos_pt_calc[ipt][5*n+2], lpn_pos_pt_calc[ipt][5*n+3]);
+          int mp_cent = int(lpn_pos_pt_calc[ipt][5*n+4]);
+
+          double ev_2cor_dif_cent = Cacl_2cov_dif(Qn, pn_pos_cent, M, mp_cent, mp_cent);
+          double ev_4cor_dif_cent = Cacl_4cov_dif(Qn, pn_pos_cent, pn_pos_cent, Q2n, p2n_pos_cent, M, mp_cent, mp_cent);
+
+          double weight_dif[2] = {mp_cent*M - mp_cent, (mp_cent*M - 3*mp_cent)*(M-1)*(M-2)};//wc2_dif, wc4_dif
+          
+          pCor2_dif_pt[n][0][ipt]->Fill(cent, ev_2cor_dif_cent, weight_dif[0]);
+          pCor4_dif_pt[n][0][ipt]->Fill(cent, ev_4cor_dif_cent, weight_dif[1]);
+          //covariance
+          pCov_dif_pt[n][0][ipt][0]->Fill(cent, ev_2cor_ref*ev_2cor_dif_cent, weight_ref[0]*weight_dif[0]);
+          pCov_dif_pt[n][0][ipt][1]->Fill(cent, ev_2cor_ref*ev_4cor_dif_cent, weight_ref[0]*weight_dif[1]);
+          pCov_dif_pt[n][0][ipt][2]->Fill(cent, ev_4cor_ref*ev_2cor_dif_cent, weight_ref[1]*weight_dif[0]);
+          pCov_dif_pt[n][0][ipt][3]->Fill(cent, ev_4cor_ref*ev_4cor_dif_cent, weight_ref[1]*weight_dif[1]);
+          pCov_dif_pt[n][0][ipt][4]->Fill(cent, ev_2cor_dif_cent*ev_4cor_dif_cent, weight_dif[0]*weight_dif[1]);
+        }//
+
+
+        if(lpn_neg_pt_calc[ipt][5*n+4]!=0)
+        {//pT dependence of negative particles flow
+          TComplex pn_pos_cent(lpn_neg_pt_calc[ipt][5*n], lpn_neg_pt_calc[ipt][5*n+1]);
+          TComplex p2n_pos_cent(lpn_neg_pt_calc[ipt][5*n+2], lpn_neg_pt_calc[ipt][5*n+3]);
+          int mp_cent = int(lpn_neg_pt_calc[ipt][5*n+4]);
+
+          double ev_2cor_dif_cent = Cacl_2cov_dif(Qn, pn_pos_cent, M, mp_cent, mp_cent);
+          double ev_4cor_dif_cent = Cacl_4cov_dif(Qn, pn_pos_cent, pn_pos_cent, Q2n, p2n_pos_cent, M, mp_cent, mp_cent);
+
+          double weight_dif[2] = {mp_cent*M - mp_cent, (mp_cent*M - 3*mp_cent)*(M-1)*(M-2)};//wc2_dif, wc4_dif
+          
+          pCor2_dif_pt[n][1][ipt]->Fill(cent, ev_2cor_dif_cent, weight_dif[0]);
+          pCor4_dif_pt[n][1][ipt]->Fill(cent, ev_4cor_dif_cent, weight_dif[1]);
+          //covariance
+          pCov_dif_pt[n][1][ipt][0]->Fill(cent, ev_2cor_ref*ev_2cor_dif_cent, weight_ref[0]*weight_dif[0]);
+          pCov_dif_pt[n][1][ipt][1]->Fill(cent, ev_2cor_ref*ev_4cor_dif_cent, weight_ref[0]*weight_dif[1]);
+          pCov_dif_pt[n][1][ipt][2]->Fill(cent, ev_4cor_ref*ev_2cor_dif_cent, weight_ref[1]*weight_dif[0]);
+          pCov_dif_pt[n][1][ipt][3]->Fill(cent, ev_4cor_ref*ev_4cor_dif_cent, weight_ref[1]*weight_dif[1]);
+          pCov_dif_pt[n][1][ipt][4]->Fill(cent, ev_2cor_dif_cent*ev_4cor_dif_cent, weight_dif[0]*weight_dif[1]);
+        }//
+      }//for(int ipt=0; ipt!=n_pt_points; ipt++)
+      
+      //............................end of Pt dependeces...................
+
+
+      //............................Eta dependeces...................
+      if(n == 0){
+        for(int ieta=0; ieta!=n_eta_points; ieta++){
+          if(lpn_pos_eta_calc[ieta][5*n+4]!=0)
+          {//eta dependence of K+, pi+ flow
+            TComplex pn_pos_cent(lpn_pos_eta_calc[ieta][5*n], lpn_pos_eta_calc[ieta][5*n+1]);
+            TComplex p2n_pos_cent(lpn_pos_eta_calc[ieta][5*n+2], lpn_pos_eta_calc[ieta][5*n+3]);
+            int mp_cent = int(lpn_pos_eta_calc[ieta][5*n+4]);
+
+            double ev_2cor_dif_cent = Cacl_2cov_dif(Qn, pn_pos_cent, M, mp_cent, mp_cent);
+            double ev_4cor_dif_cent = Cacl_4cov_dif(Qn, pn_pos_cent, pn_pos_cent, Q2n, p2n_pos_cent, M, mp_cent, mp_cent);
+
+            double weight_dif[2] = {mp_cent*M - mp_cent, (mp_cent*M - 3*mp_cent)*(M-1)*(M-2)};//wc2_dif, wc4_dif
+            
+            pCor2_dif_eta[0][ieta]->Fill(cent, ev_2cor_dif_cent, weight_dif[0]);
+            pCor4_dif_eta[0][ieta]->Fill(cent, ev_4cor_dif_cent, weight_dif[1]);
+            //covariance
+            pCov_dif_eta[0][ieta][0]->Fill(cent, ev_2cor_ref*ev_2cor_dif_cent, weight_ref[0]*weight_dif[0]);
+            pCov_dif_eta[0][ieta][1]->Fill(cent, ev_2cor_ref*ev_4cor_dif_cent, weight_ref[0]*weight_dif[1]);
+            pCov_dif_eta[0][ieta][2]->Fill(cent, ev_4cor_ref*ev_2cor_dif_cent, weight_ref[1]*weight_dif[0]);
+            pCov_dif_eta[0][ieta][3]->Fill(cent, ev_4cor_ref*ev_4cor_dif_cent, weight_ref[1]*weight_dif[1]);
+            pCov_dif_eta[0][ieta][4]->Fill(cent, ev_2cor_dif_cent*ev_4cor_dif_cent, weight_dif[0]*weight_dif[1]);
+          }//
+
+
+          if(lpn_neg_eta_calc[ieta][5*n+4]!=0)
+          {//eta dependence of K-, pi- flow
+            TComplex pn_pos_cent(lpn_neg_eta_calc[ieta][5*n], lpn_neg_eta_calc[ieta][5*n+1]);
+            TComplex p2n_pos_cent(lpn_neg_eta_calc[ieta][5*n+2], lpn_neg_eta_calc[ieta][5*n+3]);
+            int mp_cent = int(lpn_neg_eta_calc[ieta][5*n+4]);
+
+            double ev_2cor_dif_cent = Cacl_2cov_dif(Qn, pn_pos_cent, M, mp_cent, mp_cent);
+            double ev_4cor_dif_cent = Cacl_4cov_dif(Qn, pn_pos_cent, pn_pos_cent, Q2n, p2n_pos_cent, M, mp_cent, mp_cent);
+
+            double weight_dif[2] = {mp_cent*M - mp_cent, (mp_cent*M - 3*mp_cent)*(M-1)*(M-2)};//wc2_dif, wc4_dif
+            
+            pCor2_dif_eta[1][ieta]->Fill(cent, ev_2cor_dif_cent, weight_dif[0]);
+            pCor4_dif_eta[1][ieta]->Fill(cent, ev_4cor_dif_cent, weight_dif[1]);
+            //covariance
+            pCov_dif_eta[1][ieta][0]->Fill(cent, ev_2cor_ref*ev_2cor_dif_cent, weight_ref[0]*weight_dif[0]);
+            pCov_dif_eta[1][ieta][1]->Fill(cent, ev_2cor_ref*ev_4cor_dif_cent, weight_ref[0]*weight_dif[1]);
+            pCov_dif_eta[1][ieta][2]->Fill(cent, ev_4cor_ref*ev_2cor_dif_cent, weight_ref[1]*weight_dif[0]);
+            pCov_dif_eta[1][ieta][3]->Fill(cent, ev_4cor_ref*ev_4cor_dif_cent, weight_ref[1]*weight_dif[1]);
+            pCov_dif_eta[1][ieta][4]->Fill(cent, ev_2cor_dif_cent*ev_4cor_dif_cent, weight_dif[0]*weight_dif[1]);
+          }//
+
+
+          if(lpn_prot_eta_calc[ieta][5*n+4]!=0)
+          {//eta dependence of p+ flow
+            TComplex pn_pos_cent(lpn_prot_eta_calc[ieta][5*n], lpn_prot_eta_calc[ieta][5*n+1]);
+            TComplex p2n_pos_cent(lpn_prot_eta_calc[ieta][5*n+2], lpn_prot_eta_calc[ieta][5*n+3]);
+            int mp_cent = int(lpn_prot_eta_calc[ieta][5*n+4]);
+
+            double ev_2cor_dif_cent = Cacl_2cov_dif(Qn, pn_pos_cent, M, mp_cent, mp_cent);
+            double ev_4cor_dif_cent = Cacl_4cov_dif(Qn, pn_pos_cent, pn_pos_cent, Q2n, p2n_pos_cent, M, mp_cent, mp_cent);
+
+            double weight_dif[2] = {mp_cent*M - mp_cent, (mp_cent*M - 3*mp_cent)*(M-1)*(M-2)};//wc2_dif, wc4_dif
+            
+            pCor2_dif_prot_eta[0][ieta]->Fill(cent, ev_2cor_dif_cent, weight_dif[0]);
+            pCor4_dif_prot_eta[0][ieta]->Fill(cent, ev_4cor_dif_cent, weight_dif[1]);
+            //covariance
+            pCov_dif_prot_eta[0][ieta][0]->Fill(cent, ev_2cor_ref*ev_2cor_dif_cent, weight_ref[0]*weight_dif[0]);
+            pCov_dif_prot_eta[0][ieta][1]->Fill(cent, ev_2cor_ref*ev_4cor_dif_cent, weight_ref[0]*weight_dif[1]);
+            pCov_dif_prot_eta[0][ieta][2]->Fill(cent, ev_4cor_ref*ev_2cor_dif_cent, weight_ref[1]*weight_dif[0]);
+            pCov_dif_prot_eta[0][ieta][3]->Fill(cent, ev_4cor_ref*ev_4cor_dif_cent, weight_ref[1]*weight_dif[1]);
+            pCov_dif_prot_eta[0][ieta][4]->Fill(cent, ev_2cor_dif_cent*ev_4cor_dif_cent, weight_dif[0]*weight_dif[1]);
+          }//
+
+
+          if(lpn_protBar_eta_calc[ieta][5*n+4]!=0)
+          {//eta dependence of p- flow
+            TComplex pn_pos_cent(lpn_protBar_eta_calc[ieta][5*n], lpn_protBar_eta_calc[ieta][5*n+1]);
+            TComplex p2n_pos_cent(lpn_protBar_eta_calc[ieta][5*n+2], lpn_protBar_eta_calc[ieta][5*n+3]);
+            int mp_cent = int(lpn_protBar_eta_calc[ieta][5*n+4]);
+
+            double ev_2cor_dif_cent = Cacl_2cov_dif(Qn, pn_pos_cent, M, mp_cent, mp_cent);
+            double ev_4cor_dif_cent = Cacl_4cov_dif(Qn, pn_pos_cent, pn_pos_cent, Q2n, p2n_pos_cent, M, mp_cent, mp_cent);
+
+            double weight_dif[2] = {mp_cent*M - mp_cent, (mp_cent*M - 3*mp_cent)*(M-1)*(M-2)};//wc2_dif, wc4_dif
+            
+            pCor2_dif_prot_eta[1][ieta]->Fill(cent, ev_2cor_dif_cent, weight_dif[0]);
+            pCor4_dif_prot_eta[1][ieta]->Fill(cent, ev_4cor_dif_cent, weight_dif[1]);
+            //covariance
+            pCov_dif_prot_eta[1][ieta][0]->Fill(cent, ev_2cor_ref*ev_2cor_dif_cent, weight_ref[0]*weight_dif[0]);
+            pCov_dif_prot_eta[1][ieta][1]->Fill(cent, ev_2cor_ref*ev_4cor_dif_cent, weight_ref[0]*weight_dif[1]);
+            pCov_dif_prot_eta[1][ieta][2]->Fill(cent, ev_4cor_ref*ev_2cor_dif_cent, weight_ref[1]*weight_dif[0]);
+            pCov_dif_prot_eta[1][ieta][3]->Fill(cent, ev_4cor_ref*ev_4cor_dif_cent, weight_ref[1]*weight_dif[1]);
+            pCov_dif_prot_eta[1][ieta][4]->Fill(cent, ev_2cor_dif_cent*ev_4cor_dif_cent, weight_dif[0]*weight_dif[1]);
+          }//
+        }//for(int ieta=0; ieta!=n_eta_points; ieta++)
+      }//if(n == 0)
       
     }//for(int n=0; n!=3; n++)
   } //for(Long64_t iEvent=0; iEvent<events2read; iEvent++)
@@ -345,6 +577,65 @@ void analyseMcDst(const Char_t *inFile,
   pCor2_dif_prot_cent_forv1[1]->SetTitle("Cor2 dif cum for p^{-} v_{1}");
   pCor4_dif_prot_cent_forv1[0]->SetTitle("Cor4 dif cum for p^{+} v_{1}");
   pCor4_dif_prot_cent_forv1[1]->SetTitle("Cor4 dif cum for p^{-} v_{1}");
+
+
+  //for pt dep
+  for(int n=0; n!=3; n++){
+    for(int ipt=0; ipt!=n_pt_points; ipt++){
+      if(n!=0){//elliptic and triangular
+        pCor2_dif_pt[n][0][ipt]->SetTitle(Form("Cor2 dif cum for v_%i for (K^{+}, #pi^{+}, p^{+})", n+1));
+        pCor4_dif_pt[n][0][ipt]->SetTitle(Form("Cor4 dif cum for v_%i for (K^{+}, #pi^{+}, p^{+})", n+1));
+        pCor2_dif_pt[n][1][ipt]->SetTitle(Form("Cor2 dif cum for v_%i for (K^{-}, #pi^{-}, p^{-})", n+1));
+        pCor4_dif_pt[n][1][ipt]->SetTitle(Form("Cor4 dif cum for v_%i for (K^{-}, #pi^{-}, p^{-})", n+1));
+      }else{//directed
+        pCor2_dif_pt[n][0][ipt]->SetTitle(Form("Cor2 dif cum for v_%i for (K^{+}, #pi^{+})", n+1));
+        pCor4_dif_pt[n][0][ipt]->SetTitle(Form("Cor4 dif cum for v_%i for (K^{+}, #pi^{+})", n+1));
+        pCor2_dif_pt[n][1][ipt]->SetTitle(Form("Cor2 dif cum for v_%i for (K^{-}, #pi^{-})", n+1));
+        pCor4_dif_pt[n][1][ipt]->SetTitle(Form("Cor4 dif cum for v_%i for (K^{-}, #pi^{-})", n+1));
+      }
+
+      //Covariance
+      for(int ich=0; ich!=2; ich++){
+        pCov_dif_pt[n][ich][ipt][0]->SetTitle(Form("Covariance between 22' for v_%i if charge=%i", n+1, 1-2*ich));
+        pCov_dif_pt[n][ich][ipt][1]->SetTitle(Form("Covariance between 24' for v_%i if charge=%i", n+1, 1-2*ich));
+        pCov_dif_pt[n][ich][ipt][2]->SetTitle(Form("Covariance between 42' for v_%i if charge=%i", n+1, 1-2*ich));
+        pCov_dif_pt[n][ich][ipt][3]->SetTitle(Form("Covariance between 44' for v_%i if charge=%i", n+1, 1-2*ich));
+        pCov_dif_pt[n][ich][ipt][4]->SetTitle(Form("Covariance between 2'4' for v_%i if charge=%i", n+1, 1-2*ich));
+      }
+    }
+  }
+
+
+  //for eta dep
+  for(int ieta=0; ieta!=n_eta_points; ieta++){
+    //directed
+    pCor2_dif_eta[0][ieta]->SetTitle("Cor2 dif cum for v_1 for (K^{+}, #pi^{+})");
+    pCor4_dif_eta[0][ieta]->SetTitle("Cor4 dif cum for v_1 for (K^{+}, #pi^{+})");
+    pCor2_dif_eta[1][ieta]->SetTitle("Cor2 dif cum for v_1 for (K^{-}, #pi^{-})");
+    pCor4_dif_eta[1][ieta]->SetTitle("Cor4 dif cum for v_1 for (K^{-}, #pi^{-})");
+
+    pCor2_dif_prot_eta[0][ieta]->SetTitle("Cor2 dif cum for v_1 for (p^{+})");
+    pCor4_dif_prot_eta[0][ieta]->SetTitle("Cor4 dif cum for v_1 for (p^{+})");
+    pCor2_dif_prot_eta[1][ieta]->SetTitle("Cor2 dif cum for v_1 for (p^{-})");
+    pCor4_dif_prot_eta[1][ieta]->SetTitle("Cor4 dif cum for v_1 for (p^{-})");
+    
+
+    //Covariance
+    for(int ich=0; ich!=2; ich++){
+      pCov_dif_eta[ich][ieta][0]->SetTitle(Form("Covariance between 22' for v_1 if charge=%i", 1-2*ich));
+      pCov_dif_eta[ich][ieta][1]->SetTitle(Form("Covariance between 24' for v_1 if charge=%i", 1-2*ich));
+      pCov_dif_eta[ich][ieta][2]->SetTitle(Form("Covariance between 42' for v_1 if charge=%i", 1-2*ich));
+      pCov_dif_eta[ich][ieta][3]->SetTitle(Form("Covariance between 44' for v_1 if charge=%i", 1-2*ich));
+      pCov_dif_eta[ich][ieta][4]->SetTitle(Form("Covariance between 2'4' for v_1 if charge=%i", 1-2*ich));
+
+      //for proton
+      pCov_dif_prot_eta[ich][ieta][0]->SetTitle(Form("Covariance between 22' for v_1 if charge=%i", 1-2*ich));
+      pCov_dif_prot_eta[ich][ieta][1]->SetTitle(Form("Covariance between 24' for v_1 if charge=%i", 1-2*ich));
+      pCov_dif_prot_eta[ich][ieta][2]->SetTitle(Form("Covariance between 42' for v_1 if charge=%i", 1-2*ich));
+      pCov_dif_prot_eta[ich][ieta][3]->SetTitle(Form("Covariance between 44' for v_1 if charge=%i", 1-2*ich));
+      pCov_dif_prot_eta[ich][ieta][4]->SetTitle(Form("Covariance between 2'4' for v_1 if charge=%i", 1-2*ich));
+    }
+  }
   
 
 
