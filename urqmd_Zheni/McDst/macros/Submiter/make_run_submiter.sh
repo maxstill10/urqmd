@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for((i=1; i<10; i++)); do
+for((i=10; i<40; i++)); do
 	OutFile="submiter_subdata$i.xml"
 
 	cat > "$OutFile" <<EOF	
@@ -16,14 +16,14 @@ for((i=1; i<10; i++)); do
     ln -s /star/u/mmorozov/urqmd/urqmd_Zheni/McDst .
     ln -s /star/u/mmorozov/urqmd/urqmd_Zheni/McDst/libMcDst.so .
 
-    root -b -l -q runProcessing.C\(\"\$FILELIST\",\"\$JOBID.root\"\)
+    root -b -l -q runProcessing.C\(\"\$FILELIST\",\"subdata${i}_\$JOBINDEX.root\"\)
     </command>
 
 <!-- Get input files from get_file_lis.pl -->
 <input URL="filelist:/star/data01/pwg/mmorozov/urqmd/oo/6gev/filelist/filelist_subdata${i}.list"/>
 <stdout URL="file:/star/data01/pwg/mmorozov/urqmd/oo/6gev/log/\$JOBID.out"/>
 <stderr URL="file:/star/data01/pwg/mmorozov/urqmd/oo/6gev/log/\$JOBID.err"/>
-<output fromScratch="\$JOBID.root" toURL="file:/star/data01/pwg/mmorozov/urqmd/oo/6gev/data/"/>
+<output fromScratch="subdata${i}_\$JOBINDEX.root" toURL="file:/star/data01/pwg/mmorozov/urqmd/oo/6gev/data/"/>
 
 
   <Generator>

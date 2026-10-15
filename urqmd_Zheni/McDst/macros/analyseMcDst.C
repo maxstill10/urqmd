@@ -12,7 +12,7 @@
 // ROOT headers
 #include "TROOT.h"
 #include "TFile.h"
-#include "TDirectory"
+#include "TDirectory.h"
 #include "TChain.h"
 #include "TTree.h"
 #include "TSystem.h"
@@ -122,6 +122,14 @@ void analyseMcDst(const Char_t *inFile,
     pCor4_dif_prot_cent_forv1[ich] = new TProfile(Form("pCor4_dif_prot_cent_forv1_%i", ich), "", 9, 0, 9);
   }
 
+  //Flow dist
+  TProfile *cos_phi_vsEta[2];
+  TProfile *cos_phi_prot_vsEta[2];
+
+  for(int ich=0; ich!=2; ich++){
+    cos_phi_vsEta[ich] = new TProfile(Form("cos_phi_vsEta_%i", ich), "", n_eta_points, -5.5, 5.5);
+    cos_phi_prot_vsEta[ich] = new TProfile(Form("cos_phi_prot_vsEta_%i", ich), "", n_eta_points, -5.5, 5.5);
+  }
   
   //pt hists initialization
   ptDep->cd();
@@ -312,6 +320,25 @@ void analyseMcDst(const Char_t *inFile,
       if(pdg == -2212){//Anti Proton v1 studing
         Qn_calc(lpn_protBar_cent_calc, 0, phi);
         Qn_calc(lpn_protBar_eta_calc[eta_bin], 0, phi);
+      }
+
+      //flow by EP method
+      if(cent<=6 && cent>=4){
+        if(pdg == 211 || pdg == 321){
+          cos_phi_vsEta[0]->Fill(eta, TMath::Cos(phi));
+        }
+
+        if(pdg == 2212){
+      	  cos_phi_prot_vsEta[0]->Fill(eta, TMath::Cos(phi));
+        }
+
+        if(pdg == -211 || pdg == -321){
+          cos_phi_vsEta[1]->Fill(eta, TMath::Cos(phi));
+        }
+
+        if(pdg == -2212){
+          cos_phi_prot_vsEta[1]->Fill(eta, TMath::Cos(phi));
+        }
       }
       //........................end of Directed flow measurements........................
 
@@ -637,7 +664,11 @@ void analyseMcDst(const Char_t *inFile,
     }
   }
   
-
+  //flow by EP meth hists
+  cos_phi_vsEta[0]->SetTitle("Cos(#phi) Vs eta for (K^{+}, #pi^{+}) for 10-40 centrality");
+  cos_phi_vsEta[1]->SetTitle("Cos(#phi) Vs eta for (K^{-}, #pi^{-}) for 10-40 centrality");
+  cos_phi_prot_vsEta[0]->SetTitle("Cos(#phi) Vs eta for (p^{+}) for 10-40 centrality");
+  cos_phi_prot_vsEta[1]->SetTitle("Cos(#phi) Vs eta for (p^{-}) for 10-40 centrality");
 
   oFile->Write();
   oFile->Close();
