@@ -190,6 +190,7 @@ void analyseMcDst(const Char_t *inFile,
   //v1 dist
   TH1F *hPsi2[9][2];
   TH1F *hQvec2[9][4];
+  TProfile *CosOfDiff_2 = new TProfile("CosOfDiff_2", "CosOfDiff for Psi_2", 9, 0, 9);
 
   TProfile *prCos_phi_vsEta[2];
   TProfile *prCos_phi_prot_vsEta[2];
@@ -448,6 +449,8 @@ void analyseMcDst(const Char_t *inFile,
         hQvec2[cent][2*iSub+1]->Fill(lQ2_EP[3*iSub+1]);
         hPsi2[cent][iSub]->Fill(Psi2_EP[iSub]);     
       }
+
+      CosOfDiff_2->Fill(cent, TMath::Cos(2*(Psi2_EP[1] - Psi2_EP[0])))
 
       //flow calculating by EP
       for(Int_t iTrk=0; iTrk<nTracks; iTrk++){
