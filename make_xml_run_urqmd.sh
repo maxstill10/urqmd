@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for ((i=30; i<40; i++)); do
+for ((i=95; i<100; i++)); do
 	mkdir -p /gpfs01/star/scratch/mmorozov/urqmd_3.9_Zheni/log_cms/subdata${i}
 	mkdir -p /star/data01/pwg/mmorozov/urqmd/oo/6gev/subdata${i}
 

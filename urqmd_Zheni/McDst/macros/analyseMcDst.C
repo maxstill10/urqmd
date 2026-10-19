@@ -405,15 +405,15 @@ void analyseMcDst(const Char_t *inFile,
 
       //.....................EP method measurements.........................................
 
-      if(pt>2.) continue;
-      if(fabs(eta) < 0.1) continue;
+      //if(pt>2.) continue;
+      //if(fabs(eta) < 0.1) continue;
 
       int iSide = -1;
       if(eta<0) iSide = 0; //East
       else iSide = 1;      //West
 
-      lQ2_EP[3*iSide] += pt*TMath::Cos(phi);
-      lQ2_EP[3*iSide+1] += pt*TMath::Sin(phi);
+      lQ2_EP[3*iSide] += pt*TMath::Cos(2*phi);
+      lQ2_EP[3*iSide+1] += pt*TMath::Sin(2*phi);
       lQ2_EP[3*iSide+2] += pt;
 
     }//for(Int_t iTrk=0; iTrk<nTracks; iTrk++) First track loop
@@ -424,7 +424,7 @@ void analyseMcDst(const Char_t *inFile,
 
     //Get Q_vec
     for(int iSub=0; iSub!=2; iSub++){
-      if(lQ2_EP[3*iSub+2]!=){
+      if(lQ2_EP[3*iSub+2]!=0){
         lQ2_EP[3*iSub] /= lQ2_EP[3*iSub+2];
         lQ2_EP[3*iSub+1] /= lQ2_EP[3*iSub+2];
       }else{
@@ -433,8 +433,10 @@ void analyseMcDst(const Char_t *inFile,
       }
     }
 
-    bool check = false;
-    if(lQ2_EP[3*iSub]!= -999. && lQ2_EP[3*iSub+1]!= -999.) check = true;
+    bool check = true;
+    for(int iSub=0; iSub!=2; iSub++){
+      if(lQ2_EP[3*iSub]== -999. || lQ2_EP[3*iSub+1]== -999.) check = false;
+    }
 
     if(check)    
     {
@@ -450,7 +452,7 @@ void analyseMcDst(const Char_t *inFile,
         hPsi2[cent][iSub]->Fill(Psi2_EP[iSub]);     
       }
 
-      CosOfDiff_2->Fill(cent, TMath::Cos(2*(Psi2_EP[1] - Psi2_EP[0])))
+      CosOfDiff_2->Fill(cent, TMath::Cos(2*(Psi2_EP[1] - Psi2_EP[0])));
 
       //flow calculating by EP
       for(Int_t iTrk=0; iTrk<nTracks; iTrk++){
@@ -494,14 +496,14 @@ void analyseMcDst(const Char_t *inFile,
 
         if(pdg == 211 || pdg == 321 || pdg == 2212)
         {//p+K+pi
-          double v2 = TMath::Cos(phi - Psi2_EP[iSide]);
+          double v2 = TMath::Cos(2*(phi - Psi2_EP[iSide]));
           prCos_2dphi_vsCent[0]->Fill(cent, v2);
           prCos_2dphi_vsCent_forPt[0][pt_bin]->Fill(cent, v2);
         }
 
         if(pdg == -211 || pdg == -321 || pdg == -2212)
         {//p_bar+K_bar+pi_bar
-          double v2 = TMath::Cos(phi - Psi2_EP[iSide]);
+          double v2 = TMath::Cos(2*(phi - Psi2_EP[iSide]));
           prCos_2dphi_vsCent[1]->Fill(cent, v2);
           prCos_2dphi_vsCent_forPt[1][pt_bin]->Fill(cent, v2);
         }
@@ -823,7 +825,7 @@ void analyseMcDst(const Char_t *inFile,
   }
   
   //EP hists
-  for(int iCent=0; iCent!+9; iCent++){
+  for(int iCent=0; iCent!=9; iCent++){
     hQvec2[iCent][0]->SetTitle(Form("Qx East for %i centrality", iCent));
     hQvec2[iCent][1]->SetTitle(Form("Qy East for %i centrality", iCent));
     hQvec2[iCent][2]->SetTitle(Form("Qx West for %i centrality", iCent));

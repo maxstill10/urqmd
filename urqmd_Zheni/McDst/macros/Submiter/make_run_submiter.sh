@@ -1,7 +1,7 @@
 #!/bin/bash
 
-for((i=10; i<40; i++)); do
-	OutFile="submiter_subdata$i.xml"
+for((i=12; i<100; i++)); do
+	OutFile="submiter_subdata${i}.xml"
 
 	cat > "$OutFile" <<EOF	
 <!-- Task description -->
