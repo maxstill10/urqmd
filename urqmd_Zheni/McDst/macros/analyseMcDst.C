@@ -190,21 +190,25 @@ void analyseMcDst(const Char_t *inFile,
   v2_RP_meth->cd();
 
   //EP dist
-  TH1F *hPsi1[9][2];
-  TH1F *hQvec1[9][4];
+  TH1F *hPsi1[9][3];
+  TH1F *hQvec1[9][6];
   TProfile *CosOfDiff_1 = new TProfile("CosOfDiff_1", "CosOfDiff for Psi_1", 9, 0, 9);
 
-  TH1F *hPsi2[9][2];
-  TH1F *hQvec2[9][4];
+  TH1F *hPsi2[9][3];
+  TH1F *hQvec2[9][6];
   TProfile *CosOfDiff_2 = new TProfile("CosOfDiff_2", "CosOfDiff for Psi_2", 9, 0, 9);  
 
   //v2 dist
-  TProfile *prCos_2dphi_vsCent[2];
-  TProfile *prCos_2dphi_vsCent_forPt[2][n_pt_points];
+  TProfile *prCos_2phi_vsCent[2];
+  TProfile *prCos_2phi_vsCent_forPt[2][n_pt_points];
+  TProfile *prCos_2dphi2_vsCent[2];
+  TProfile *prCos_2dphi2_vsCent_forPt[2][n_pt_points];
+  TProfile *prCos_2dphi1_vsCent[2];
+  TProfile *prCos_2dphi1_vsCent_forPt[2][n_pt_points];
 
   //Psi, Qvec hists
   for(int iCent=0; iCent!=9; iCent++){
-    for(int iSub=0; iSub!=2; iSub++){
+    for(int iSub=0; iSub!=3; iSub++){
       hQvec1[iCent][2*iSub] = new TH1F(Form("hQvec1_%i_%i", iCent, 2*iSub), "", 500, -1, 1);
       hQvec1[iCent][2*iSub+1] = new TH1F(Form("hQvec1_%i_%i", iCent, 2*iSub+1), "", 500, -1, 1);
       hPsi1[iCent][iSub] = new TH1F(Form("hPsi1_%i_%i", iCent, iSub), "", 70, 0, 3.5);
@@ -218,9 +222,13 @@ void analyseMcDst(const Char_t *inFile,
   for(int ich=0; ich!=2; ich++){
     
     //v2
-    prCos_2dphi_vsCent[ich] = new TProfile(Form("prCos_2dphi_vsCent_%i", ich), "", 9, 0, 9);
+    prCos_2dphi2_vsCent[ich] = new TProfile(Form("prCos_2dphi2_vsCent_%i", ich), "", 9, 0, 9);
+    prCos_2dphi1_vsCent[ich] = new TProfile(Form("prCos_2dphi1_vsCent_%i", ich), "", 9, 0, 9);
+    prCos_2phi_vsCent[ich] = new TProfile(Form("prCos_2phi_vsCent_%i", ich), "", 9, 0, 9);
     for(int ipt=0; ipt!=n_pt_points; ipt++){
-      prCos_2dphi_vsCent_forPt[ich][ipt] = new TProfile(Form("prCos_2dphi_vsCent_forPt_%i_%i", ich, ipt), "", 9, 0, 9);
+      prCos_2dphi2_vsCent_forPt[ich][ipt] = new TProfile(Form("prCos_2dphi2_vsCent_forPt_%i_%i", ich, ipt), "", 9, 0, 9);
+      prCos_2dphi1_vsCent_forPt[ich][ipt] = new TProfile(Form("prCos_2dphi1_vsCent_forPt_%i_%i", ich, ipt), "", 9, 0, 9);
+      prCos_2phi_vsCent_forPt[ich][ipt] = new TProfile(Form("prCos_2phi_vsCent_forPt_%i_%i", ich, ipt), "", 9, 0, 9);
     }
   }
 
@@ -231,14 +239,22 @@ void analyseMcDst(const Char_t *inFile,
   //v1 RP dependences initialization
   v1_RP_meth->cd();
 
-  TProfile *prCos_phi_vsEta[2];
-  TProfile *prCos_phi_prot_vsEta[2];
+  TProfile *prCos_phi_vsEta[2][9];
+  TProfile *prCos_phi_prot_vsEta[2][9];
+
+  TProfile *prCos_dphi1_vsEta[2][9];
+  TProfile *prCos_dphi1_prot_vsEta[2][9];
 
   for(int ich=0; ich!=2; ich++){
     
     //v1
-    prCos_phi_vsEta[ich] = new TProfile(Form("prCos_phi_vsEta_%i", ich), "", n_eta_points, -5.5, 5.5);
-    prCos_phi_prot_vsEta[ich] = new TProfile(Form("prCos_phi_prot_vsEta_%i", ich), "", n_eta_points, -5.5, 5.5);
+    for(int iCent=0; iCent!=9; iCent++){
+      prCos_phi_vsEta[ich] = new TProfile(Form("prCos_phi_vsEta_%i_%i", ich, iCent), "", n_eta_points, -5.5, 5.5);
+      prCos_phi_prot_vsEta[ich] = new TProfile(Form("prCos_phi_prot_vsEta_%i_%i", ich, iCent), "", n_eta_points, -5.5, 5.5);
+
+      prCos_dphi1_vsEta[ich] = new TProfile(Form("prCos_dphi1_vsEta_%i", ich, iCent), "", n_eta_points, -5.5, 5.5);
+      prCos_dphi1_prot_vsEta[ich] = new TProfile(Form("prCos_dphi1_prot_vsEta_%i", ich, iCent), "", n_eta_points, -5.5, 5.5);
+    }
 
   }
 
@@ -311,8 +327,11 @@ void analyseMcDst(const Char_t *inFile,
     double lpn_protBar_eta_calc[n_eta_points][5] = {};// (cos(nphi), sin(nphi), cos(2nphi), sin(2nphi), numPart) for (p-)
 
     //for EP method
-    double lQ2_EP[6] = {}; // (east+west)*(x, y, w)
-    double Psi2_EP[2] = {};
+    double lQ1_EP[9] = {}; // (east+west+comb)*(x, y, w)
+    double lQ2_EP[9] = {}; // (east+west+comb)*(x, y, w)
+
+    double Psi1_EP[3] = {};    
+    double Psi2_EP[3] = {};
 
     // Track analysis
     Int_t nTracks = dst->numberOfParticles();
@@ -344,11 +363,12 @@ void analyseMcDst(const Char_t *inFile,
       Double_t t = particle->t();
       Int_t pdg = particle->pdg();
 
-      if(particle->charge() == 0) continue;
-      if(particle->pt() < 0.15) continue;
+      if(particle->charge() == 0) continue;            
 
       hpT->Fill(pt);
       hEta->Fill(eta);
+
+      if(fabs(eta) < 0.05) continue;
 
       //Get pt and eta bins
       int pt_bin = -1;
@@ -358,7 +378,16 @@ void analyseMcDst(const Char_t *inFile,
       if(pt>=pt_intervals[n_pt_points]) pt_bin = n_pt_points;
 
       //.....................get Psi1_BBC.........................................
+      if(fabs(eta) > 2.1 && fabs(eta) < 5.0) {
+        
+        int iSide = -1;
+        if(eta<0) iSide = 0; //East
+        else iSide = 1;      //West
 
+        lQ1_EP[3*iSide] += 1.*TMath::Cos(phi);
+        lQ1_EP[3*iSide+1] += 1.*TMath::Sin(phi);
+        lQ1_EP[3*iSide+2] += 1.;
+      }
 
       //.....................end of get Psi1_BBC.........................................
 
@@ -390,30 +419,13 @@ void analyseMcDst(const Char_t *inFile,
         Qn_calc(lpn_protBar_cent_calc, 0, phi);
         Qn_calc(lpn_protBar_eta_calc[eta_bin], 0, phi);
       }
-
-      //v1 flow by EP method
-      if(cent<=6 && cent>=4){
-        if(pdg == 211 || pdg == 321){
-          prCos_phi_vsEta[0]->Fill(eta, TMath::Cos(phi));
-        }
-
-        if(pdg == 2212){
-      	  prCos_phi_prot_vsEta[0]->Fill(eta, TMath::Cos(phi));
-        }
-
-        if(pdg == -211 || pdg == -321){
-          prCos_phi_vsEta[1]->Fill(eta, TMath::Cos(phi));
-        }
-
-        if(pdg == -2212){
-          prCos_phi_prot_vsEta[1]->Fill(eta, TMath::Cos(phi));
-        }
-      }
+      
       //........................end of Directed flow measurements by cum........................
 
-
-      //..................Elliptic and triangular flow measurements by cum......................
+      if(particle->pt() < 0.15) continue;
       if(fabs(particle->eta()) > 1.) continue;
+      
+      //..................Elliptic and triangular flow measurements by cum......................      
 
       for(int n = 1; n!=3; n++){
         Qn_calc(lQn_calc, n, phi);
@@ -434,8 +446,7 @@ void analyseMcDst(const Char_t *inFile,
 
       //.....................get Psi2.........................................
 
-      //if(pt>2.) continue;
-      //if(fabs(eta) < 0.1) continue;
+      //if(pt>2.) continue;      
 
       int iSide = -1;
       if(eta<0) iSide = 0; //East
@@ -451,7 +462,7 @@ void analyseMcDst(const Char_t *inFile,
     //=============================================================================================
     //...............................Flow measurements by EP method................................
 
-    //Get Q_vec
+    //Get Q_vec for Psi2
     for(int iSub=0; iSub!=2; iSub++){
       if(lQ2_EP[3*iSub+2]!=0){
         lQ2_EP[3*iSub] /= lQ2_EP[3*iSub+2];
@@ -462,62 +473,183 @@ void analyseMcDst(const Char_t *inFile,
       }
     }
 
-    bool check = true;
+    bool check_q2 = true;
     for(int iSub=0; iSub!=2; iSub++){
-      if(lQ2_EP[3*iSub]== -999. || lQ2_EP[3*iSub+1]== -999.) check = false;
+      if(lQ2_EP[3*iSub]== -999. || lQ2_EP[3*iSub+1]== -999.) check_q2 = false;
     }
 
-    if(check)    
-    {
+    if(check_q2){
+      lQ2_EP[6] = lQ2_EP[0] + lQ2_EP[3];
+      lQ2_EP[7] = lQ2_EP[1] + lQ2_EP[4];
+
       //Psi angle reconstruction
       for(int iSub=0; iSub!=2; iSub++){
         Psi2_EP[iSub] = GetPsi(2, lQ2_EP[3*iSub], lQ2_EP[3*iSub+1]);
       }
 
       //EP hists filling
-      for(int iSub=0; iSub!=2; iSub++){
+      for(int iSub=0; iSub!=3; iSub++){
         hQvec2[cent][2*iSub]->Fill(lQ2_EP[3*iSub]);
         hQvec2[cent][2*iSub+1]->Fill(lQ2_EP[3*iSub+1]);
         hPsi2[cent][iSub]->Fill(Psi2_EP[iSub]);     
       }
 
       CosOfDiff_2->Fill(cent, TMath::Cos(2*(Psi2_EP[1] - Psi2_EP[0])));
+    }
+    
 
-      //flow calculating by EP
-      for(Int_t iTrk=0; iTrk<nTracks; iTrk++){
-        // Retrieve i-th femto track
-        McParticle *particle = dst->particle(iTrk);
+    //Get Q_vec for Psi1
+    for(int iSub=0; iSub!=2; iSub++){
+      if(lQ1_EP[3*iSub+2]!=0){
+        lQ1_EP[3*iSub] /= lQ1_EP[3*iSub+2];
+        lQ1_EP[3*iSub+1] /= lQ1_EP[3*iSub+2];
+      }else{
+        lQ1_EP[3*iSub] = -999.;
+        lQ1_EP[3*iSub+1] = -999.;
+      }
+    }
+    
+    bool check_q1 = true;
+    for(int iSub=0; iSub!=2; iSub++){
+      if(lQ1_EP[3*iSub]== -999. || lQ1_EP[3*iSub+1]== -999.) check_q1 = false;
+    }
 
-        if (!particle) continue;
+    if(check_q1){
+      lQ1_EP[6] = lQ1_EP[0] + lQ1_EP[3];
+      lQ1_EP[7] = lQ1_EP[1] + lQ1_EP[4];
 
-        //variables
-        Double_t x = particle->x();
-        Double_t y = particle->y();
-        Double_t z = particle->z();
-        Double_t px = particle->px();
-        Double_t py = particle->py();
-        Double_t pz = particle->pz();
-        Double_t p = particle->ptot();
-        Double_t pt = particle->pt();
-        Double_t phi = particle->phi();
-        Double_t eta = particle->eta();
-        Double_t mass = particle->mass();
-        //Double_t pdgMass = particle->pdgMass();
-        Double_t e = particle->e();
-        Double_t t = particle->t();
-        Int_t pdg = particle->pdg();
+      //Psi angle reconstruction
+      for(int iSub=0; iSub!=3; iSub++){
+        Psi1_EP[iSub] = GetPsi(1, lQ1_EP[3*iSub], lQ1_EP[3*iSub+1]);
+      }
 
-        if(particle->charge() == 0) continue;
-        if(particle->pt() < 0.15) continue;
-        if(fabs(particle->eta()) > 1.) continue;
+      //EP hists filling
+      for(int iSub=0; iSub!=3; iSub++){
+        hQvec1[cent][2*iSub]->Fill(lQ1_EP[3*iSub]);
+        hQvec1[cent][2*iSub+1]->Fill(lQ1_EP[3*iSub+1]);
+        hPsi1[cent][iSub]->Fill(Psi1_EP[iSub]);     
+      }
 
-        //Get pt and eta bins
-        int pt_bin = -1;
-        for(int ipt = 0; ipt!=n_pt_points; ipt++){
-          if(pt>=pt_intervals[ipt] && pt<pt_intervals[ipt+1]) { pt_bin = ipt; break;}
+      CosOfDiff_1->Fill(cent, TMath::Cos(Psi1_EP[1] - Psi1_EP[0]));
+    }
+    
+      
+
+    //flow calculating by EP
+    for(Int_t iTrk=0; iTrk<nTracks; iTrk++){
+      // Retrieve i-th femto track
+      McParticle *particle = dst->particle(iTrk);
+
+      if (!particle) continue;
+
+      //variables
+      Double_t x = particle->x();
+      Double_t y = particle->y();
+      Double_t z = particle->z();
+      Double_t px = particle->px();
+      Double_t py = particle->py();
+      Double_t pz = particle->pz();
+      Double_t p = particle->ptot();
+      Double_t pt = particle->pt();
+      Double_t phi = particle->phi();
+      Double_t eta = particle->eta();
+      Double_t mass = particle->mass();
+      //Double_t pdgMass = particle->pdgMass();
+      Double_t e = particle->e();
+      Double_t t = particle->t();
+      Int_t pdg = particle->pdg();
+
+      if(particle->charge() == 0) continue;
+      if(fabs(particle->eta()) >= 5.5) continue;
+      
+      //Clear v1
+      //v1 flow by EP method
+      if(pdg == 211 || pdg == 321){
+        prCos_phi_vsEta[0][cent]->Fill(eta, TMath::Cos(phi));
+      }
+
+      if(pdg == 2212){
+        prCos_phi_prot_vsEta[0][cent]->Fill(eta, TMath::Cos(phi));
+      }
+
+      if(pdg == -211 || pdg == -321){
+        prCos_phi_vsEta[1][cent]->Fill(eta, TMath::Cos(phi));
+      }
+
+      if(pdg == -2212){
+        prCos_phi_prot_vsEta[1][cent]->Fill(eta, TMath::Cos(phi));
+      }
+
+
+      //v1 by Psi_BBC
+      if(check_q1){
+        if(pdg == 211 || pdg == 321){
+          prCos_dphi1_vsEta[0][cent]->Fill(eta, TMath::Cos(phi - Psi1_EP[2]));
         }
-        if(pt>=pt_intervals[n_pt_points]) pt_bin = n_pt_points;
 
+        if(pdg == 2212){
+          prCos_dphi1_prot_vsEta[0][cent]->Fill(eta, TMath::Cos(phi - Psi1_EP[2]));
+        }
+
+        if(pdg == -211 || pdg == -321){
+          prCos_dphi1_vsEta[1][cent]->Fill(eta, TMath::Cos(phi - Psi1_EP[2]));
+        }
+
+        if(pdg == -2212){
+          prCos_dphi1_prot_vsEta[1][cent]->Fill(eta, TMath::Cos(phi - Psi1_EP[2]));
+        }
+      }
+
+
+
+      if(particle->pt() < 0.15) continue;
+      if(fabs(particle->eta()) > 1.) continue;
+
+      //Get pt and eta bins
+      int pt_bin = -1;
+      for(int ipt = 0; ipt!=n_pt_points; ipt++){
+        if(pt>=pt_intervals[ipt] && pt<pt_intervals[ipt+1]) { pt_bin = ipt; break;}
+      }
+      if(pt>=pt_intervals[n_pt_points]) pt_bin = n_pt_points;      
+
+      
+      //Clear v2
+      if(pdg == 211 || pdg == 321 || pdg == 2212)
+      {//p+K+pi
+        double v2 = TMath::Cos(2*(phi));
+        prCos_2phi_vsCent[0]->Fill(cent, v2);
+        prCos_2phi_vsCent_forPt[0][pt_bin]->Fill(cent, v2);
+      }
+
+      if(pdg == -211 || pdg == -321 || pdg == -2212)
+      {//p_bar+K_bar+pi_bar
+        double v2 = TMath::Cos(2*(phi));
+        prCos_2phi_vsCent[1]->Fill(cent, v2);
+        prCos_2phi_vsCent_forPt[1][pt_bin]->Fill(cent, v2);
+      }
+
+      
+      //v2 by Psi1
+      if(check_q1){
+        
+        if(pdg == 211 || pdg == 321 || pdg == 2212)
+        {//p+K+pi
+          double v2 = TMath::Cos(2*(phi - Psi1_EP[2]));
+          prCos_2dphi1_vsCent[0]->Fill(cent, v2);
+          prCos_2dphi1_vsCent_forPt[0][pt_bin]->Fill(cent, v2);
+        }
+
+        if(pdg == -211 || pdg == -321 || pdg == -2212)
+        {//p_bar+K_bar+pi_bar
+          double v2 = TMath::Cos(2*(phi - Psi1_EP[2]));
+          prCos_2dphi1_vsCent[1]->Fill(cent, v2);
+          prCos_2dphi1_vsCent_forPt[1][pt_bin]->Fill(cent, v2);
+        }
+      }
+
+      
+      //v2 by Psi2
+      if(check_q2){
         //Get iSide number
         int iSide = -1;
         if(eta<0) iSide = 1; //East
@@ -526,20 +658,21 @@ void analyseMcDst(const Char_t *inFile,
         if(pdg == 211 || pdg == 321 || pdg == 2212)
         {//p+K+pi
           double v2 = TMath::Cos(2*(phi - Psi2_EP[iSide]));
-          prCos_2dphi_vsCent[0]->Fill(cent, v2);
-          prCos_2dphi_vsCent_forPt[0][pt_bin]->Fill(cent, v2);
+          prCos_2dphi2_vsCent[0]->Fill(cent, v2);
+          prCos_2dphi2_vsCent_forPt[0][pt_bin]->Fill(cent, v2);
         }
 
         if(pdg == -211 || pdg == -321 || pdg == -2212)
         {//p_bar+K_bar+pi_bar
           double v2 = TMath::Cos(2*(phi - Psi2_EP[iSide]));
-          prCos_2dphi_vsCent[1]->Fill(cent, v2);
-          prCos_2dphi_vsCent_forPt[1][pt_bin]->Fill(cent, v2);
+          prCos_2dphi2_vsCent[1]->Fill(cent, v2);
+          prCos_2dphi2_vsCent_forPt[1][pt_bin]->Fill(cent, v2);
         }
+      }
 
 
-      }//for(Int_t iTrk=0; iTrk<nTracks; iTrk++) Second track loop
-    }//if(check)
+    }//for(Int_t iTrk=0; iTrk<nTracks; iTrk++) Second track loop
+    
 
     //...............................end of flow measurements by EP method.........................
     //=============================================================================================
@@ -871,19 +1004,48 @@ void analyseMcDst(const Char_t *inFile,
   }
   
   //flow by EP meth hists
-  prCos_phi_vsEta[0]->SetTitle("Cos(#phi) Vs eta for (K^{+}, #pi^{+}) for 10-40 centrality");
-  prCos_phi_vsEta[1]->SetTitle("Cos(#phi) Vs eta for (K^{-}, #pi^{-}) for 10-40 centrality");
-  prCos_phi_prot_vsEta[0]->SetTitle("Cos(#phi) Vs eta for (p^{+}) for 10-40 centrality");
-  prCos_phi_prot_vsEta[1]->SetTitle("Cos(#phi) Vs eta for (p^{-}) for 10-40 centrality");
 
-  //v2
-  prCos_2dphi_vsCent[0]->SetTitle("Cos(#phi) Vs cent for (K^{+}, #pi^{+}, p^{+})");
-  prCos_2dphi_vsCent[1]->SetTitle("Cos(#phi) Vs cent for (K^{+}, #pi^{+}, p^{+})");
+  
+  for(int iCent=0; iCent!=9; iCent++){
+    //Clear v1
+    prCos_phi_vsEta[0][iCent]->SetTitle(Form("Cos(#phi) Vs eta for (K^{+}, #pi^{+}) for iCent=(%i)", iCent));
+    prCos_phi_vsEta[1][iCent]->SetTitle(Form("Cos(#phi) Vs eta for (K^{-}, #pi^{-}) for iCent=(%i)", iCent));
+    prCos_phi_prot_vsEta[0][iCent]->SetTitle(Form("Cos(#phi) Vs eta for (p^{+}) for iCent=(%i)", iCent));
+    prCos_phi_prot_vsEta[1][iCent]->SetTitle(Form("Cos(#phi) Vs eta for (p^{-}) for iCent=(%i)", iCent));
+
+    //v1 by Psi_BBC
+    prCos_dphi1_vsEta[0][iCent]->SetTitle(Form("Cos(#phi-#Psi_{BBC}) Vs eta for (K^{+}, #pi^{+}) for iCent=(%i)", iCent));
+    prCos_dphi1_vsEta[1][iCent]->SetTitle(Form("Cos(#phi-#Psi_{BBC}) Vs eta for (K^{-}, #pi^{-}) for iCent=(%i)", iCent));
+    prCos_dphi1_prot_vsEta[0][iCent]->SetTitle(Form("Cos(#phi-#Psi_{BBC}) Vs eta for (p^{+}) for iCent=(%i)", iCent));
+    prCos_dphi1_prot_vsEta[1][iCent]->SetTitle(Form("Cos(#phi-#Psi_{BBC}) Vs eta for (p^{-}) for iCent=(%i)", iCent));
+  }
+
+  //v2 by Psi_2
+  prCos_2dphi2_vsCent[0]->SetTitle("Cos(2#phi-2#Psi_{2}) Vs cent for (K^{+}, #pi^{+}, p^{+})");
+  prCos_2dphi2_vsCent[1]->SetTitle("Cos(2#phi-2#Psi_{2}) Vs cent for (K^{+}, #pi^{+}, p^{+})");
+
+  //v2 by Psi_BBC
+  prCos_2dphi1_vsCent[0]->SetTitle("Cos(2#phi-2#Psi_{2}) Vs cent for (K^{+}, #pi^{+}, p^{+})");
+  prCos_2dphi1_vsCent[1]->SetTitle("Cos(2#phi-2#Psi_{2}) Vs cent for (K^{+}, #pi^{+}, p^{+})");
+
+  //Clear v2
+  prCos_2phi_vsCent[0]->SetTitle("Cos(2#phi) Vs cent for (K^{+}, #pi^{+}, p^{+})");
+  prCos_2phi_vsCent[1]->SetTitle("Cos(2#phi) Vs cent for (K^{+}, #pi^{+}, p^{+})");
 
   for(int ipt=0; ipt!=n_pt_points; ipt++){
-    prCos_2dphi_vsCent_forPt[0][ipt]->SetTitle(Form("Cos(#phi) Vs cent for (K^{+}, #pi^{+}, p^{+}) for ipt=(%i)", ipt));
-    prCos_2dphi_vsCent_forPt[1][ipt]->SetTitle(Form("Cos(#phi) Vs cent for (K^{+}, #pi^{+}, p^{+}) for ipt=(%i)", ipt));
+    //v2 by Psi_2
+    prCos_2dphi2_vsCent_forPt[0][ipt]->SetTitle(Form("Cos(2#phi-2#Psi_{2}) Vs cent for (K^{+}, #pi^{+}, p^{+}) for ipt=(%i)", ipt));
+    prCos_2dphi2_vsCent_forPt[1][ipt]->SetTitle(Form("Cos(2#phi-2#Psi_{2}) Vs cent for (K^{+}, #pi^{+}, p^{+}) for ipt=(%i)", ipt));
+
+    //v2 by Psi_BBC
+    prCos_2dphi1_vsCent_forPt[0][ipt]->SetTitle(Form("Cos(2#phi-2#Psi_{BBC}) Vs cent for (K^{+}, #pi^{+}, p^{+}) for ipt=(%i)", ipt));
+    prCos_2dphi1_vsCent_forPt[1][ipt]->SetTitle(Form("Cos(2#phi-2#Psi_{BBC}) Vs cent for (K^{+}, #pi^{+}, p^{+}) for ipt=(%i)", ipt));
+    
+    //Clear v2
+    prCos_2phi_vsCent_forPt[0][ipt]->SetTitle(Form("Cos(2#phi) Vs cent for (K^{+}, #pi^{+}, p^{+}) for ipt=(%i)", ipt));
+    prCos_2phi_vsCent_forPt[1][ipt]->SetTitle(Form("Cos(2#phi) Vs cent for (K^{+}, #pi^{+}, p^{+}) for ipt=(%i)", ipt));
   }
+
 
   oFile->Write();
   oFile->Close();
