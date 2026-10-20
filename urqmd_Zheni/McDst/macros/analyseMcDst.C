@@ -85,10 +85,12 @@ void analyseMcDst(const Char_t *inFile,
   oFile->cd();
   TDirectory *ptDep = oFile->mkdir("pt_dependences");
   TDirectory *etaDep = oFile->mkdir("eta_dependences");
-  TDirectory *RP_meth = oFile->mkdir("RP_method_dir");
+  TDirectory *v2_RP_meth = oFile->mkdir("v2_RP_method_dir");
+  TDirectory *v1_RP_meth = oFile->mkdir("v1_RP_method_dir");
 
   //Hist initialization
   TH1F *hpT = new TH1F("hpT", "p_{T} of particles", 570, 0.15, 3);
+  TH1F *hEta = new TH1F("hEta", "#eta of particles", 600, -6, 6);
   TH1F *hcent = new TH1F("hcent", "Event Centrality", 9, 0, 9);
 
   TProfile *pCor2_ref[3];
@@ -184,16 +186,17 @@ void analyseMcDst(const Char_t *inFile,
   //end of eta hists initialization
 
 
-  //RP dependences initialization
-  RP_meth->cd();
+  //v2 RP dependences initialization
+  v2_RP_meth->cd();
 
-  //v1 dist
+  //EP dist
+  TH1F *hPsi1[9][2];
+  TH1F *hQvec1[9][4];
+  TProfile *CosOfDiff_1 = new TProfile("CosOfDiff_1", "CosOfDiff for Psi_1", 9, 0, 9);
+
   TH1F *hPsi2[9][2];
   TH1F *hQvec2[9][4];
-  TProfile *CosOfDiff_2 = new TProfile("CosOfDiff_2", "CosOfDiff for Psi_2", 9, 0, 9);
-
-  TProfile *prCos_phi_vsEta[2];
-  TProfile *prCos_phi_prot_vsEta[2];
+  TProfile *CosOfDiff_2 = new TProfile("CosOfDiff_2", "CosOfDiff for Psi_2", 9, 0, 9);  
 
   //v2 dist
   TProfile *prCos_2dphi_vsCent[2];
@@ -202,6 +205,10 @@ void analyseMcDst(const Char_t *inFile,
   //Psi, Qvec hists
   for(int iCent=0; iCent!=9; iCent++){
     for(int iSub=0; iSub!=2; iSub++){
+      hQvec1[iCent][2*iSub] = new TH1F(Form("hQvec1_%i_%i", iCent, 2*iSub), "", 500, -1, 1);
+      hQvec1[iCent][2*iSub+1] = new TH1F(Form("hQvec1_%i_%i", iCent, 2*iSub+1), "", 500, -1, 1);
+      hPsi1[iCent][iSub] = new TH1F(Form("hPsi1_%i_%i", iCent, iSub), "", 70, 0, 3.5);
+
       hQvec2[iCent][2*iSub] = new TH1F(Form("hQvec2_%i_%i", iCent, 2*iSub), "", 500, -1, 1);
       hQvec2[iCent][2*iSub+1] = new TH1F(Form("hQvec2_%i_%i", iCent, 2*iSub+1), "", 500, -1, 1);
       hPsi2[iCent][iSub] = new TH1F(Form("hPsi2_%i_%i", iCent, iSub), "", 70, 0, 3.5);
@@ -210,10 +217,6 @@ void analyseMcDst(const Char_t *inFile,
   
   for(int ich=0; ich!=2; ich++){
     
-    //v1
-    prCos_phi_vsEta[ich] = new TProfile(Form("prCos_phi_vsEta_%i", ich), "", n_eta_points, -5.5, 5.5);
-    prCos_phi_prot_vsEta[ich] = new TProfile(Form("prCos_phi_prot_vsEta_%i", ich), "", n_eta_points, -5.5, 5.5);
-
     //v2
     prCos_2dphi_vsCent[ich] = new TProfile(Form("prCos_2dphi_vsCent_%i", ich), "", 9, 0, 9);
     for(int ipt=0; ipt!=n_pt_points; ipt++){
@@ -222,7 +225,26 @@ void analyseMcDst(const Char_t *inFile,
   }
 
   oFile->cd();
-  //end of RP dependences initialization
+  //end of v2 RP dependences initialization
+
+
+  //v1 RP dependences initialization
+  v1_RP_meth->cd();
+
+  TProfile *prCos_phi_vsEta[2];
+  TProfile *prCos_phi_prot_vsEta[2];
+
+  for(int ich=0; ich!=2; ich++){
+    
+    //v1
+    prCos_phi_vsEta[ich] = new TProfile(Form("prCos_phi_vsEta_%i", ich), "", n_eta_points, -5.5, 5.5);
+    prCos_phi_prot_vsEta[ich] = new TProfile(Form("prCos_phi_prot_vsEta_%i", ich), "", n_eta_points, -5.5, 5.5);
+
+  }
+
+  oFile->cd();
+  //end of v1 RP dependences initialization
+
 
   Int_t eventCounter = 0;
   Int_t hundredIter = 0;
@@ -326,6 +348,7 @@ void analyseMcDst(const Char_t *inFile,
       if(particle->pt() < 0.15) continue;
 
       hpT->Fill(pt);
+      hEta->Fill(eta);
 
       //Get pt and eta bins
       int pt_bin = -1;
@@ -334,7 +357,13 @@ void analyseMcDst(const Char_t *inFile,
       }
       if(pt>=pt_intervals[n_pt_points]) pt_bin = n_pt_points;
 
-      //........................Directed flow measurements........................
+      //.....................get Psi1_BBC.........................................
+
+
+      //.....................end of get Psi1_BBC.........................................
+
+
+      //........................Directed flow measurements by cum........................
       if(fabs(particle->eta()) >= 5.5) continue;
 
       double delta_eta = 11.0 / n_eta_points;
@@ -380,10 +409,10 @@ void analyseMcDst(const Char_t *inFile,
           prCos_phi_prot_vsEta[1]->Fill(eta, TMath::Cos(phi));
         }
       }
-      //........................end of Directed flow measurements........................
+      //........................end of Directed flow measurements by cum........................
 
 
-      //..................Elliptic and triangular flow measurements......................
+      //..................Elliptic and triangular flow measurements by cum......................
       if(fabs(particle->eta()) > 1.) continue;
 
       for(int n = 1; n!=3; n++){
@@ -400,10 +429,10 @@ void analyseMcDst(const Char_t *inFile,
         }
       }
 
-      //..................end of Elliptic and triangular flow measurements......................
+      //..................end of Elliptic and triangular flow measurements by cum......................
 
 
-      //.....................EP method measurements.........................................
+      //.....................get Psi2.........................................
 
       //if(pt>2.) continue;
       //if(fabs(eta) < 0.1) continue;
@@ -826,6 +855,13 @@ void analyseMcDst(const Char_t *inFile,
   
   //EP hists
   for(int iCent=0; iCent!=9; iCent++){
+    hQvec1[iCent][0]->SetTitle(Form("Qx East for %i centrality", iCent));
+    hQvec1[iCent][1]->SetTitle(Form("Qy East for %i centrality", iCent));
+    hQvec1[iCent][2]->SetTitle(Form("Qx West for %i centrality", iCent));
+    hQvec1[iCent][3]->SetTitle(Form("Qy West for %i centrality", iCent));
+    hPsi1[iCent][0]->SetTitle(Form("Psi1 East for %i centrality", iCent));
+    hPsi1[iCent][1]->SetTitle(Form("Psi1 West for %i centrality", iCent));
+    
     hQvec2[iCent][0]->SetTitle(Form("Qx East for %i centrality", iCent));
     hQvec2[iCent][1]->SetTitle(Form("Qy East for %i centrality", iCent));
     hQvec2[iCent][2]->SetTitle(Form("Qx West for %i centrality", iCent));
